@@ -50,17 +50,26 @@ function initDBConnection() {
 initDBConnection();
 
 function checkCheckList(checklist){
+	var assets;
+	var assetsPresent = [];
 	function checkCheckList(){
-		
 		var deferred = Q.defer();
-		var assets = checklist.assets;
+		assets = checklist.assets;
+		
+		//check all assets availability in the given regions
+		for (var asset = 0; asset < assets.length; asset++)
+			assetsPresent.push(false);
+
+		//read regions from checklist
 		var regions = checklist.regions;
 		var gateways = [];
 		var promises = [];
 
+		//find out all the gateways in the given regions
 		regions.map(function(item){
 			var deferred = Q.defer();
 			
+			//append gateways in the given regions
 			db.get(item,function(err, body){
 				gateways = gateways.concat(body.gateways);
 				deferred.resolve(gateways);
@@ -72,12 +81,45 @@ function checkCheckList(checklist){
 		return Q.all(promises);
 	};
 
-	checkCheckList().spread(function(data){
-		console.log(data);
+	checkCheckList().spread(function(gateways){
+		var promises = [];
+
+		//for each asset
+		assets.forEach(function(asset, assetIndex){
+
+			//check asset in each gateway
+			gateways.forEach(function(gateway, gatewayIndex){
+				
+				var deferred = Q.defer();
+				db.get(gateway, function(err, body){
+
+					//if asset present in this gateway
+					if (body.assets.indexOf(asset) > - 1){
+						//console.log(asset+" is present in "+gateways[gatewayIndex]);
+						assetsPresent[assetIndex] = true;
+					}
+					else {
+						//console.log("Not present");
+					}
+					deferred.resolve(assetsPresent);
+				});
+				promises.push(deferred.promise);
+			});
+		});
+
+		Q.all(promises).then(function(data){
+			var assetsMissingBoolean = data[data.length-1];
+			for (var i = 0; i < assetsMissingBoolean.length; i++){
+				if (!assetsMissingBoolean[i]){
+					console.log(assets[i]+" is missing!!!!!!!!!");
+				}
+			}
+		});
 	});
 }
 
 function main(){
+	console.log("Shubham");
 	//Get the name of the logged in user from session
 	var username = "skjindal93";
 	var password = "hehe"; //Password filled by user
@@ -96,7 +138,10 @@ function main(){
 	});
 };
 
-main();
+setInterval(function(){
+	main();
+},2000);
+
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
