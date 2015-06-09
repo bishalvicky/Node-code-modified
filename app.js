@@ -51,27 +51,28 @@ initDBConnection();
 
 function checkCheckList(checklist){
 	function checkCheckList(){
+		
 		var deferred = Q.defer();
 		var assets = checklist.assets;
 		var regions = checklist.regions;
 		var gateways = [];
-		var promise =  Q.all(regions.map(function(item){
+		var promises = [];
+
+		regions.map(function(item){
+			var deferred = Q.defer();
+			
 			db.get(item,function(err, body){
 				gateways = gateways.concat(body.gateways);
-				return gateways;
+				deferred.resolve(gateways);
 			});
-		}));
-		/*for (var j = 0; j < regions.length; j++){
-			db.get(regions[j],function(err, body){
-				gateways = gateways.concat(body.gateways);
-				console.log(gateways);
-			});
-		}
-		deferred.resolve(gateways);
-		return deferred.promise;*/
-		return promise;
+
+			promises.push(deferred.promise);
+		});
+
+		return Q.all(promises);
 	};
-	checkCheckList().then(function(data){
+
+	checkCheckList().spread(function(data){
 		console.log(data);
 	});
 }
