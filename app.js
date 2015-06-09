@@ -1,9 +1,8 @@
 
 var express = require('express');
 var cfenv = require('cfenv');
-var fs = require('fs');
+
 var app = express();
-var db;
 var cloudant;
 
 var dbCredentials = {
@@ -48,67 +47,6 @@ function initDBConnection() {
 }
 
 initDBConnection();
-
-
-function createDoc(docid){
-	var obj;
-	fs.readFile('./data/' + docid + '.json', 'utf8', function (err, data) {
-	  if (err) throw err;
-	  obj = JSON.parse(data);
-
-	  var rev;
-	  db.get(docid, { revs_info: true }, function(err, body) {
-		  if (!err){
-		  		//Getting revision number of assets document
-		    	
-		    	rev = body._rev;
-		    	
-		    	//Deleting if rev exists
-		    	if (typeof rev !== "undefined"){
-				  	db.destroy(docid, rev, function(err, body){
-				  		if (!err){
-				  			console.log(docid + " Destroyed");
-				  			db.insert(obj, docid, function(err, body, header) {
-									if (err)
-										return console.log('[' + docid + '.insert] ', err.message);
-								  console.log('Inserted in '+docid);
-								});
-				  		}
-				  	});
-				  }
-		  	}
-		  else {
-		  	//Inserting the assets data from assets.json file
-				db.insert(obj, docid, function(err, body, header) {
-					if (err)
-						return console.log('[' + docid + '.insert] ', err.message);
-					console.log('Inserted in '+docid);
-				});
-		  }
-		});
-	});
-};
-
-createDoc("asset_8cd2c39d10f0");
-createDoc("skjindal93");
-createDoc("gateway_7cd1c39d10f0");
-/*
-
-
-db.insert({crazy: true}, 'gateways', function(err, body, header) {
-	if (err)
-		return console.log('[alice.insert] ', err.message);
-  console.log('you have inserted the rabbit.');
-  console.log(body);
-});
-
-db.insert({crazy: true}, 'checklist', function(err, body, header) {
-	if (err)
-		return console.log('[alice.insert] ', err.message);
-  console.log('you have inserted the rabbit.');
-  console.log(body);
-});
-*/
 
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {

@@ -1,0 +1,8 @@
+{
+	"latitudeStart": 15,
+	"longitudeStart": 79,
+	"latitudeEnd": 20,
+	"longitudeEnd": 85,
+	"altitude":30,
+	"gateways": ["gateway_9cd1c39d10f0"]
+}

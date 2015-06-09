@@ -1,5 +1,15 @@
 {
 	"password": "hehe",
-	"assetsList": ["7c:d1:c3:9d:10:f0"],
-	"fence": {}
+	"assets":
+		{
+			"checkList1":
+				{
+					"devices": ["asset_5cd2c39d10f0", "asset_6cd2c39d10f0"],
+					"regions": ["region_1"]
+				},
+			"checkList2":
+				{
+
+				}
+		}
 }
