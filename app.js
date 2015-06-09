@@ -88,6 +88,7 @@ function createDoc(docid){
 
 createDoc("assets");
 createDoc("checklist");
+createDoc("gateways");
 /*
 
 
