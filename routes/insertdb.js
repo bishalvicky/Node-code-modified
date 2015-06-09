@@ -11,7 +11,7 @@ router.get('/', function(req, res){
   res.send("GET request!");
 });
 
-router.post('/', function(){
+router.post('/', function(req, res){
   res.send("Got a POST request!");
 });
 

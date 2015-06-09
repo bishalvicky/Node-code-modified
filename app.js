@@ -11,7 +11,9 @@ var dbCredentials = {
 };
 
 var insertdb = require('./routes/insertdb');
+
 app.use('/insertdb',insertdb);
+
 app.use(express.static(__dirname + '/public'));
 var appEnv = cfenv.getAppEnv();
 
