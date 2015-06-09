@@ -109,14 +109,56 @@ function checkCheckList(checklist){
 
 		Q.all(promises).then(function(data){
 			var assetsMissingBoolean = data[data.length-1];
-			for (var i = 0; i < assetsMissingBoolean.length; i++){
-				if (!assetsMissingBoolean[i]){
-					console.log(assets[i]+" is missing!!!!!!!!!");
+			assetsMissingBoolean.forEach(function(assetBoolean, assetBooleanIndex){
+				if (!assetBoolean){
+					console.log(assets[assetBooleanIndex]+" is missing!!!!!!!!!");
+					checkInOtherRegions(assets[assetBooleanIndex]);
+
 				}
-			}
+			});
+			
 		});
 	});
 }
+
+function checkInOtherRegions(asset){
+	var regions;
+	//get all regions from data file
+	db.get("data", function(err, body){
+		regions = body.regions;
+
+		//for all regions
+		regions.forEach(function(region, regionIndex){
+			
+			//get DOC of the region
+			db.get(region, function(err, body){
+
+				//get all gateways in that region
+				var gatewaysInRegion = body.gateways;
+
+				//for all gateways in that region
+				gatewaysInRegion.forEach(function(gatewayInRegion, gatewaysInRegionIndex){
+
+					//get DOC of the gateway
+					db.get(gatewayInRegion, function(err, body){
+
+						//get all assets in that gateway
+						var assetsInGateway = body.assets;
+
+						//if given asset found in assets of that gateway
+						if(assetsInGateway.indexOf(asset) > -1){
+							console.log(asset+" found in "+region);
+							//break;
+						}
+					});
+					
+				});
+			});
+		});
+
+	});
+
+};
 
 function main(){
 	//console.log("Shubham");
@@ -137,7 +179,6 @@ function main(){
 		}
 	});
 };
-
 setInterval(function(){
 	main();
 },2000);
