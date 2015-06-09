@@ -66,18 +66,18 @@ function createDoc(docid){
 		    	//Deleting if rev exists
 		    	if (typeof rev !== "undefined"){
 				  	db.destroy(docid, rev, function(err, body){
-				  		if (!err)
+				  		if (!err){
 				  			console.log(docid + " Destroyed");
+				  			db.insert(obj, docid, function(err, body, header) {
+									if (err)
+										return console.log('[' + docid + '.insert] ', err.message);
+								  console.log('Inserted in '+docid);
+								});
+				  		}
 				  	});
 				  }
-
-				  db.insert(obj, docid, function(err, body, header) {
-						if (err)
-							return console.log('[' + docid + '.insert] ', err.message);
-					  console.log('Inserted in '+docid);
-					});
 		  	}
-		  else {	
+		  else {
 		  	//Inserting the assets data from assets.json file
 				db.insert(obj, docid, function(err, body, header) {
 					if (err)
@@ -89,9 +89,9 @@ function createDoc(docid){
 	});
 };
 
-createDoc("assets");
-createDoc("checklist");
-createDoc("gateways");
+createDoc("asset_8cd2c39d10f0");
+createDoc("skjindal93");
+createDoc("gateway_7cd1c39d10f0");
 /*
 
 
