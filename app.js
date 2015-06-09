@@ -1,11 +1,3 @@
-/*jshint node:true*/
-
-//------------------------------------------------------------------------------
-// node.js starter application for Bluemix
-//------------------------------------------------------------------------------
-
-// This application uses express as it's web server
-// for more info, see: http://expressjs.com
 
 var express = require('express');
 var cfenv = require('cfenv');
@@ -13,6 +5,7 @@ var fs = require('fs');
 var app = express();
 var db;
 var cloudant;
+
 var dbCredentials = {
 	dbName : 'nodered'
 };
@@ -35,11 +28,11 @@ function initDBConnection() {
 		console.log('VCAP Services: '+JSON.stringify(process.env.VCAP_SERVICES));
 	}
   else{
-    dbCredentials.host = "3153afa5-0cea-45e3-b78b-fedf80e77701-bluemix.cloudant.com";
+    dbCredentials.host = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
 		dbCredentials.port = 443;
-		dbCredentials.user = "3153afa5-0cea-45e3-b78b-fedf80e77701-bluemix";
-		dbCredentials.password = "336681a9347396c3405180fbcb1289e747644e84c35449b525e9c72038e9b605";
-		dbCredentials.url = "https://3153afa5-0cea-45e3-b78b-fedf80e77701-bluemix:336681a9347396c3405180fbcb1289e747644e84c35449b525e9c72038e9b605@3153afa5-0cea-45e3-b78b-fedf80e77701-bluemix.cloudant.com";    
+		dbCredentials.user = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix";
+		dbCredentials.password = "f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6";
+		dbCredentials.url = "https://f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix:f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6@f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
   }
 
 	cloudant = require('cloudant')(dbCredentials.url);
