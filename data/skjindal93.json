@@ -1,15 +1,10 @@
 {
 	"password": "hehe",
-	"assets":
-		{
-			"checkList1":
-				{
-					"devices": ["asset_5cd2c39d10f0", "asset_6cd2c39d10f0"],
-					"regions": ["region_1"]
-				},
-			"checkList2":
-				{
-
-				}
-		}
+	"checklists":
+		[
+			{
+				"assets": ["asset_5cd2c39d10f0", "asset_6cd2c39d10f0"],
+				"regions": ["region_1"]
+			}
+		]
 }

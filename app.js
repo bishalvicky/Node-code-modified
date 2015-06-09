@@ -1,6 +1,7 @@
 
 var express = require('express');
 var cfenv = require('cfenv');
+var Q = require('q');
 
 var app = express();
 var cloudant;
@@ -48,6 +49,53 @@ function initDBConnection() {
 
 initDBConnection();
 
+function checkCheckList(checklist){
+	function checkCheckList(){
+		var deferred = Q.defer();
+		var assets = checklist.assets;
+		var regions = checklist.regions;
+		var gateways = [];
+		var promise =  Q.all(regions.map(function(item){
+			db.get(item,function(err, body){
+				gateways = gateways.concat(body.gateways);
+				return gateways;
+			});
+		}));
+		/*for (var j = 0; j < regions.length; j++){
+			db.get(regions[j],function(err, body){
+				gateways = gateways.concat(body.gateways);
+				console.log(gateways);
+			});
+		}
+		deferred.resolve(gateways);
+		return deferred.promise;*/
+		return promise;
+	};
+	checkCheckList().then(function(data){
+		console.log(data);
+	});
+}
+
+function main(){
+	//Get the name of the logged in user from session
+	var username = "skjindal93";
+	var password = "hehe"; //Password filled by user
+
+	db.get(username, function(err, body){
+		//Check password
+		if (password === body.password){
+
+			//Authenticated
+			var checklists = body.checklists;
+			for (var i = 0; i < checklists.length; i++){
+				//console.log(checklists[i]);
+				checkCheckList(checklists[i]);
+			}
+		}
+	});
+};
+
+main();
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
