@@ -17,6 +17,7 @@ app.use('/insertdb',insertdb);
 app.use(express.static(__dirname + '/public'));
 var appEnv = cfenv.getAppEnv();
 
+
 function initDBConnection() {
 	if(process.env.VCAP_SERVICES) {
 		var vcapServices = JSON.parse(process.env.VCAP_SERVICES);
@@ -90,6 +91,7 @@ function createDoc(docid){
 
 createDoc("assets");
 createDoc("checklist");
+createDoc("gateways");
 /*
 
 
