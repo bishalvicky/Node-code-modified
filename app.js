@@ -119,7 +119,7 @@ function checkCheckList(checklist){
 }
 
 function main(){
-	console.log("Shubham");
+	//console.log("Shubham");
 	//Get the name of the logged in user from session
 	var username = "skjindal93";
 	var password = "hehe"; //Password filled by user

@@ -69,7 +69,10 @@ router.get('/', function(req, res){
 	//Regions
 	createDoc("region_1");
 	createDoc("region_2");
-	
+
+	//Data
+	createDoc("data")
+
 });
 
 router.post('/', function(req, res){
