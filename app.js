@@ -166,6 +166,8 @@ function checkInOtherRegions(asset){
 
 						//if given asset found in assets of that gateway
 						if(assetsInGateway.indexOf(asset) > -1){
+
+							addToTrace(body, asset);
 							console.log(asset+" found in "+region);
 							//break;
 						}
