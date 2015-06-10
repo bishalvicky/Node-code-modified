@@ -1,9 +1,5 @@
 {
-	"location": {
-		"latitude": 12.971545,
-		"longitude": 77.594606,
-		"altitude": 30
-	},
-
-	"assets": ["asset_5cd2c39d10f0","asset_6cd2c39d10f0"]
+	"type": "Point",
+	"coordinates": [12.971545, 77.594606, 30],
+	"assets": ["asset_5cd2c39d10f0","asset_9cd2c39d10f0"]
 }
