@@ -1,21 +1,33 @@
-
 var express = require('express');
 var cfenv = require('cfenv');
 var Q = require('q');
+var appEnv = cfenv.getAppEnv();
+var request = require('request');
+
+var user = "a-jq3b5v-nyywcig5q2";
+var pass = "vAlx3YAaFY2xJ!8*Gf";
+
 
 var app = express();
 var cloudant;
+var bodyParser = require('body-parser')
+
 
 var dbCredentials = {
 	dbName : 'nodered'
 };
 
 var insertdb = require('./routes/insertdb');
+var locationFromDevice = require('./routes/locationFromDevice');
 
-app.use('/insertdb',insertdb);
+app.use(bodyParser.json());       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 
 app.use(express.static(__dirname + '/public'));
-var appEnv = cfenv.getAppEnv();
+app.use('/insertdb',insertdb);
+app.use('/locationFromDevice',locationFromDevice);
 
 
 function initDBConnection() {
@@ -48,6 +60,73 @@ function initDBConnection() {
 }
 
 initDBConnection();
+
+
+function locationFromGateway(gateway){
+	//console.log(gateway);
+	var deferred = Q.defer();
+	var options = {
+	  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
+	  headers: {
+	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
+	  }
+	}
+
+	request(options, function(error, response, html){
+
+		var json = JSON.parse(html);
+		//console.log(json);
+		var data = json[0].evt;
+		
+		var assets = data.assets.split(" , ");
+		var latitude = data.latitude;
+		var longitude = data.longitude;
+		var altitude = data.altitude;
+
+		var json = {
+			"type": "Point",
+			"coordinates": [latitude, longitude, altitude],
+			"assets": assets
+		}
+
+		db.get(gateway, { revs_info: true }, function(err, body) {
+
+		  if (!err){
+
+	  		//Getting revision number of assets document
+	    	rev = body._rev;
+	    	//Deleting if rev exists
+	    	if (typeof rev !== "undefined"){
+			  	db.destroy(gateway, rev, function(err, body){
+			  		
+			  		if (!err){
+			  			console.log(gateway + " Destroyed");
+			  			db.insert(json, gateway, function(err, body, header) {
+			  				console.log(json);
+								if (err)
+									console.log('[' + gateway + '.insert] ', err.message);
+							  console.log('Inserted in '+gateway);
+							  //console.log("1");
+							  deferred.resolve(true);
+							});
+			  		}
+			  		else {
+			  			db.insert(json, gateway, function(err, body, header) {
+			  				//console.log(json);
+								if (err)
+									console.log('[' + gateway + '.insert] ', err.message);
+							  console.log('Inserted in '+gateway);
+							  console.log("1");
+							  deferred.resolve(true);
+							});
+			  		}
+			  	});
+			  }
+	  	}
+		});	
+	});
+	return deferred.promise;
+}
 
 function checkCheckList(checklist){
 	var assets;
@@ -92,14 +171,14 @@ function checkCheckList(checklist){
 				
 				var deferred = Q.defer();
 				db.get(gateway, function(err, body){
-
+					console.log(gateway);
 					//if asset present in this gateway
 					if (body.assets.indexOf(asset) > - 1){
 						//console.log(asset+" is present in "+gateways[gatewayIndex]);
 						assetsPresent[assetIndex] = true;
 
 						//console.log(body);
-						addToTrace(body, asset);
+						//addToTrace(body, asset);
 
 					}
 					else {
@@ -119,7 +198,6 @@ function checkCheckList(checklist){
 				if (!assetBoolean){
 					console.log(assets[assetBooleanIndex]+" is missing!!!!!!!!!");
 					checkInOtherRegions(assets[assetBooleanIndex]);
-
 				}
 			});
 			
@@ -133,12 +211,11 @@ function addToTrace(gateway, asset){
 		//console.log(body.trace);
 
 		var assetTrace = body.trace;
-		console.log(assetTrace);
+		//console.log(assetTrace);
 		assetTrace.push(gateway.coordinates);
-		console.log(asset+" : "+assetTrace);
+		//console.log(asset+" : "+assetTrace);
 	});
 };
-
 
 function checkInOtherRegions(asset){
 	var regions;
@@ -167,7 +244,7 @@ function checkInOtherRegions(asset){
 						//if given asset found in assets of that gateway
 						if(assetsInGateway.indexOf(asset) > -1){
 
-							addToTrace(body, asset);
+							//addToTrace(body, asset);
 							console.log(asset+" found in "+region);
 							//break;
 						}
@@ -176,36 +253,74 @@ function checkInOtherRegions(asset){
 				});
 			});
 		});
-
 	});
-
 };
-
 
 
 function main(){
-	//console.log("Shubham");
 	//Get the name of the logged in user from session
 	var username = "skjindal93";
 	var password = "hehe"; //Password filled by user
+	
 
-	db.get(username, function(err, body){
+	db.get(username, function(err, bodyUsername){
 		//Check password
-		if (password === body.password){
-
+		if (password === bodyUsername.password){
 			//Authenticated
-			var checklists = body.checklists;
-			for (var i = 0; i < checklists.length; i++){
-				//console.log(checklists[i]);
-				checkCheckList(checklists[i]);
-			}
+			
+			db.get("data", function(err, body){
+				console.log("Data");
+				var promisesX = [];
+				var gateways = body.gateways;
+				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
+				gateways.forEach(function (gateway, gatewayIndex){
+					var promise = locationFromGateway(gateway).then(function(data){
+						return Q(true);
+					});
+					promisesX.push(promise);
+				});
+
+				var checklists = bodyUsername.checklists;
+				Q.all(promisesX).then(function(data){
+					checklists.forEach(function(checklist,checklistIndex){
+						checkCheckList(checklist);
+					});
+				});
+			});
+			
+			
 		}
 	});
 };
-setInterval(function(){
-	main();
-},2000);
+var debug = true;
+if (debug){
+	setInterval(function(){
+		main();
+	},5000);
+}
+/*
+function doSomething(){
+	var deferred = Q.defer();
+	setTimeout(function(){
+		deferred.resolve("Heelo!");
+	},10000);
+	return deferred.promise;
+}
 
+var a = [1,2,3,4,5];
+var promises = [];
+a.forEach(function(item,index){
+    var deferred = Q.defer();
+    var promise = doSomething().then(function(){
+        return Q(true);
+    });
+    promises.push(promise);
+});
+
+Q.all(promises).then(function(data){
+  console.log(promises.length);
+});
+*/
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
