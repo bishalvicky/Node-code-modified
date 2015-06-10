@@ -97,6 +97,10 @@ function checkCheckList(checklist){
 					if (body.assets.indexOf(asset) > - 1){
 						//console.log(asset+" is present in "+gateways[gatewayIndex]);
 						assetsPresent[assetIndex] = true;
+
+						//console.log(body);
+						addToTrace(body, asset);
+
 					}
 					else {
 						//console.log("Not present");
@@ -110,6 +114,8 @@ function checkCheckList(checklist){
 		Q.all(promises).then(function(data){
 			var assetsMissingBoolean = data[data.length-1];
 			assetsMissingBoolean.forEach(function(assetBoolean, assetBooleanIndex){
+
+				//check which assets from checklist are missing from specified regions
 				if (!assetBoolean){
 					console.log(assets[assetBooleanIndex]+" is missing!!!!!!!!!");
 					checkInOtherRegions(assets[assetBooleanIndex]);
@@ -120,6 +126,19 @@ function checkCheckList(checklist){
 		});
 	});
 }
+
+
+function addToTrace(gateway, asset){
+	db.get(asset, function(err, body){
+		//console.log(body.trace);
+
+		var assetTrace = body.trace;
+		console.log(assetTrace);
+		assetTrace.push(gateway.coordinates);
+		console.log(asset+" : "+assetTrace);
+	});
+};
+
 
 function checkInOtherRegions(asset){
 	var regions;
@@ -159,6 +178,8 @@ function checkInOtherRegions(asset){
 	});
 
 };
+
+
 
 function main(){
 	//console.log("Shubham");
