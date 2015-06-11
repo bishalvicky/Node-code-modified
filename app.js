@@ -178,7 +178,6 @@ function checkCheckList(checklist){
 						assetsPresent[assetIndex] = true;
 
 						//console.log(body);
-						//addToTrace(body, asset);
 
 					}
 					else {
@@ -205,17 +204,6 @@ function checkCheckList(checklist){
 	});
 }
 
-
-function addToTrace(gateway, asset){
-	db.get(asset, function(err, body){
-		//console.log(body.trace);
-
-		var assetTrace = body.trace;
-		//console.log(assetTrace);
-		assetTrace.push(gateway.coordinates);
-		//console.log(asset+" : "+assetTrace);
-	});
-};
 
 function checkInOtherRegions(asset){
 	var regions;
@@ -244,7 +232,6 @@ function checkInOtherRegions(asset){
 						//if given asset found in assets of that gateway
 						if(assetsInGateway.indexOf(asset) > -1){
 
-							//addToTrace(body, asset);
 							console.log(asset+" found in "+region);
 							//break;
 						}
