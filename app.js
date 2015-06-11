@@ -19,6 +19,7 @@ var dbCredentials = {
 
 var insertdb = require('./routes/insertdb');
 var locationFromDevice = require('./routes/locationFromDevice');
+var setup = require('./routes/setup');
 
 app.use(bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
@@ -28,6 +29,7 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 app.use(express.static(__dirname + '/public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
+app.use('/setup', setup);
 
 
 function initDBConnection() {
@@ -72,9 +74,10 @@ function locationFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
+		console.log(response.headers);
 		if(error)
-			console.log(error);
-		
+			console.log("Shubham"+error);
+
 		var json = JSON.parse(html);
 		//console.log(json);
 		var data = json[0].evt;
@@ -309,7 +312,7 @@ function main(){
 };
 
 
-var debug = true;
+var debug = false;
 if (debug){
 	main();
 }
