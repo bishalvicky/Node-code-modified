@@ -63,7 +63,6 @@ initDBConnection();
 
 
 function locationFromGateway(gateway){
-	console.log(gateway);
 	var deferred = Q.defer();
 	var options = {
 	  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
@@ -73,7 +72,9 @@ function locationFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
-
+		if(error)
+			console.log(error);
+		
 		var json = JSON.parse(html);
 		//console.log(json);
 		var data = json[0].evt;
@@ -90,7 +91,6 @@ function locationFromGateway(gateway){
 		}
 
 		db.get(gateway, { revs_info: true }, function(err, body) {
-
 		  if (!err){
 
 	  		//Getting revision number of assets document
@@ -98,7 +98,6 @@ function locationFromGateway(gateway){
 	    	//Deleting if rev exists
 	    	if (typeof rev !== "undefined"){
 			  	db.destroy(gateway, rev, function(err, body){
-			  		
 			  		if (!err){
 			  			console.log(gateway + " Destroyed");
 			  			db.insert(json, gateway, function(err, body, header) {
@@ -109,26 +108,28 @@ function locationFromGateway(gateway){
 							  //console.log("1");
 							  deferred.resolve(true);
 							});
-			  		}
-			  		else {
-			  			db.insert(json, gateway, function(err, body, header) {
-			  				//console.log(json);
-								if (err)
-									console.log('[' + gateway + '.insert] ', err.message);
-							  console.log('Inserted in '+gateway);
-							  console.log("1");
-							  deferred.resolve(true);
-							});
-			  		}
+			  		}	
 			  	});
 			  }
 	  	}
+	  	else {
+  			db.insert(json, gateway, function(err, body, header) {
+  				//console.log(json);
+					if (err)
+						console.log('[' + gateway + '.insert] ', err.message);
+				  console.log('Inserted in '+gateway);
+				  console.log("1");
+				  deferred.resolve(true);
+				});
+  		}
 		});	
 	});
 	return deferred.promise;
 }
 
 function checkCheckList(checklist){
+	console.log("Ghusa checklist mein");
+	var deferredCheckList = Q.defer();
 	var assets;
 	var assetsPresent = [];
 	function checkCheckList(){
@@ -171,7 +172,6 @@ function checkCheckList(checklist){
 				
 				var deferred = Q.defer();
 				db.get(gateway, function(err, body){
-					console.log(gateway);
 					//if asset present in this gateway
 					if (body.assets.indexOf(asset) > - 1){
 						//console.log(asset+" is present in "+gateways[gatewayIndex]);
@@ -191,22 +191,31 @@ function checkCheckList(checklist){
 
 		Q.all(promises).then(function(data){
 			var assetsMissingBoolean = data[data.length-1];
+			var promisesRegions = [];
 			assetsMissingBoolean.forEach(function(assetBoolean, assetBooleanIndex){
 
 				//check which assets from checklist are missing from specified regions
 				if (!assetBoolean){
 					console.log(assets[assetBooleanIndex]+" is missing!!!!!!!!!");
-					checkInOtherRegions(assets[assetBooleanIndex]);
+					var promiseCheckInOtherRegions = checkInOtherRegions(assets[assetBooleanIndex]).then(function(){
+						return Q(true);	
+					});
+					promisesRegions.push(promiseCheckInOtherRegions);
 				}
 			});
-			
+			Q.all(promisesRegions).then(function(){
+				console.log("CheckList Done");
+				deferredCheckList.resolve("CheckList Done");
+			});
 		});
 	});
+	return deferredCheckList.promise;
 }
 
 
 function checkInOtherRegions(asset){
 	var regions;
+	var deferred = Q.defer();
 	//get all regions from data file
 	db.get("data", function(err, body){
 		regions = body.regions;
@@ -233,7 +242,11 @@ function checkInOtherRegions(asset){
 						if(assetsInGateway.indexOf(asset) > -1){
 
 							console.log(asset+" found in "+region);
+							deferred.resolve("Found!!");
 							//break;
+						}
+						else {
+							deferred.resolve("Missing!!");
 						}
 					});
 					
@@ -241,6 +254,7 @@ function checkInOtherRegions(asset){
 			});
 		});
 	});
+	return deferred.promise;
 };
 
 
@@ -258,8 +272,8 @@ function main(){
 			//Authenticated
 			
 			db.get("data", function(err, body){
-				console.log("Data");
 				var promisesX = [];
+				var promisesChecklist = [];
 				var gateways = body.gateways;
 				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
 				gateways.forEach(function (gateway, gatewayIndex){
@@ -272,11 +286,18 @@ function main(){
 
 				var checklists = bodyUsername.checklists;
 				Q.all(promisesX).then(function(data){
+					var promisesChecklists = [];
 					checklists.forEach(function(checklist,checklistIndex){
-						checkCheckList(checklist);
+						var promisecheckChecklist = checkCheckList(checklist).then(function(){
+							return Q(true);
+						});
+						promisesChecklists.push(promisecheckChecklist);
 					});
-					console.log("Hello!");
-					deferredMain.resolve(true);
+					Q.all(promisesChecklists).then(function(){
+						console.log("Length: "+promisesChecklists.length);
+						//callback();
+						deferredMain.resolve("Main Done");
+					});
 				});
 
 			});
@@ -288,7 +309,7 @@ function main(){
 };
 
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
