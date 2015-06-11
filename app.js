@@ -22,6 +22,7 @@ var locationFromDevice = require('./routes/locationFromDevice');
 var addGateways = require('./routes/addGateways');
 var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
+var setup = require('./routes/setup');
 
 app.use(bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
@@ -34,7 +35,7 @@ app.use('/locationFromDevice',locationFromDevice);
 app.use('/addGateways',addGateways);
 app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
-
+app.use('/setup', setup);
 
 function initDBConnection() {
 	if(process.env.VCAP_SERVICES) {
@@ -78,9 +79,10 @@ function locationFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
+		console.log(response.headers);
 		if(error)
-			console.log(error);
-		
+			console.log("Shubham"+error);
+
 		var json = JSON.parse(html);
 		//console.log(json);
 		var data = json[0].evt;
