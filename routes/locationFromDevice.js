@@ -15,6 +15,7 @@ router.post('/', function(req, res){
 	//var longitude = req.body.longitude;
 	//var altitude = req.body.altitude;
   res.send("Got a POST request!");
+
 });
 
 module.exports = router;
