@@ -63,7 +63,7 @@ initDBConnection();
 
 
 function locationFromGateway(gateway){
-	//console.log(gateway);
+	console.log(gateway);
 	var deferred = Q.defer();
 	var options = {
 	  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
@@ -258,6 +258,8 @@ function checkInOtherRegions(asset){
 
 
 function main(){
+	console.log("Hello");
+	var deferredMain = Q.defer();
 	//Get the name of the logged in user from session
 	var username = "skjindal93";
 	var password = "hehe"; //Password filled by user
@@ -274,6 +276,7 @@ function main(){
 				var gateways = body.gateways;
 				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
 				gateways.forEach(function (gateway, gatewayIndex){
+
 					var promise = locationFromGateway(gateway).then(function(data){
 						return Q(true);
 					});
@@ -285,27 +288,49 @@ function main(){
 					checklists.forEach(function(checklist,checklistIndex){
 						checkCheckList(checklist);
 					});
+					console.log("Hello!");
+					deferredMain.resolve(true);
 				});
+
 			});
-			
-			
 		}
 	});
+	deferredMain.promise.then(function(){
+		main();
+	});
 };
-var debug = true;
+
+
+var debug = false;
+if (debug){
+	main();
+}
+/*
 if (debug){
 	setInterval(function(){
 		main();
-	},5000);
+	},10000);
 }
-/*
+
+//main().then(function(){
+	//main();
+//})
+
+
 function doSomething(){
+	console.log("Hello!");
 	var deferred = Q.defer();
 	setTimeout(function(){
 		deferred.resolve("Heelo!");
 	},10000);
-	return deferred.promise;
+	deferred.promise.then(function(){
+		doSomething();
+	});
 }
+
+doSomething();
+*/
+/*
 
 var a = [1,2,3,4,5];
 var promises = [];
