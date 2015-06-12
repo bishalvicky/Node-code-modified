@@ -74,9 +74,6 @@ function locationFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
-		console.log(response.headers);
-		if(error)
-			console.log("Shubham"+error);
 
 		var json = JSON.parse(html);
 		//console.log(json);
@@ -97,19 +94,20 @@ function locationFromGateway(gateway){
 		  if (!err){
 
 	  		//Getting revision number of assets document
-	    	rev = body._rev;
+	    	var rev = body._rev;
 	    	//Deleting if rev exists
 	    	if (typeof rev !== "undefined"){
 			  	db.destroy(gateway, rev, function(err, body){
 			  		if (!err){
 			  			console.log(gateway + " Destroyed");
 			  			db.insert(json, gateway, function(err, body, header) {
-			  				console.log(json);
+			  				//console.log(json);
 								if (err)
 									console.log('[' + gateway + '.insert] ', err.message);
 							  console.log('Inserted in '+gateway);
 							  //console.log("1");
 							  deferred.resolve(true);
+							  console.log("Gateways End");
 							});
 			  		}	
 			  	});
@@ -121,8 +119,9 @@ function locationFromGateway(gateway){
 					if (err)
 						console.log('[' + gateway + '.insert] ', err.message);
 				  console.log('Inserted in '+gateway);
-				  console.log("1");
+				  //console.log("1");
 				  deferred.resolve(true);
+				  console.log("Gateways End");
 				});
   		}
 		});	
@@ -131,7 +130,6 @@ function locationFromGateway(gateway){
 }
 
 function checkCheckList(checklist){
-	console.log("Ghusa checklist mein");
 	var deferredCheckList = Q.defer();
 	var assets;
 	var assetsPresent = [];
@@ -150,10 +148,11 @@ function checkCheckList(checklist){
 
 		//find out all the gateways in the given regions
 		regions.map(function(item){
+
 			var deferred = Q.defer();
-			
 			//append gateways in the given regions
 			db.get(item,function(err, body){
+				console.log("Adding Region:" + item);
 				gateways = gateways.concat(body.gateways);
 				deferred.resolve(gateways);
 			});
@@ -170,28 +169,91 @@ function checkCheckList(checklist){
 		//for each asset
 		assets.forEach(function(asset, assetIndex){
 
+			console.log("Checking Asset: " + asset);
 			//check asset in each gateway
 			gateways.forEach(function(gateway, gatewayIndex){
-				
+
 				var deferred = Q.defer();
 				db.get(gateway, function(err, body){
+					
+					console.log("Looking in Gateway:"+ gateway);
 					//if asset present in this gateway
 					if (body.assets.indexOf(asset) > - 1){
-						//console.log(asset+" is present in "+gateways[gatewayIndex]);
+						console.log(asset+" is present in "+gateways[gatewayIndex]);
 						assetsPresent[assetIndex] = true;
+						db.get(asset, function(err,body){
 
+							//console.log("Asset:" + asset);
+							if (body.type !== "gps") {
+
+								var trace_json = {
+									"gateway" : gateway,
+									"timestamp" : Date.now()
+								};
+								
+								var arr = body.trace.slice();
+								arr.push(trace_json);
+								
+								var asset_json = { 
+									"type" : body.type,
+									"rules" : body.rules,
+									"trace" : arr
+								};
+								//console.log(body.trace, body.trace.length);
+								if (body.trace.length === 0){
+									
+						  		//Getting revision number of assets document
+						    	var rev = body._rev;
+						    	//console.log("Rev: "+rev);
+						    	//Deleting if rev exists
+
+						    	if (typeof rev !== "undefined"){
+
+								  	db.destroy(asset, rev, function(err, body){
+								  		if (!err){
+								  			//console.log(asset);
+								  			db.insert(asset_json, asset, function(err, body, header) {
+								  				console.log("Found");
+												  deferred.resolve(assetsPresent);
+												});
+								  		}	
+								  	});
+								  }
+								}
+								else if (body.trace[body.trace.length-1].gateway !== gateway){
+									var rev = body._rev;
+						    	//Deleting if rev exists
+						    	if (typeof rev !== "undefined"){
+								  	db.destroy(asset, rev, function(err, body){
+								  		if (!err){
+								  			db.insert(asset_json, asset, function(err, body, header) {
+												  deferred.resolve(assetsPresent);
+												});
+								  		}	
+								  	});
+								  }
+								}
+								else {
+									deferred.resolve(assetsPresent);
+								}
+							}
+							else {
+								deferred.resolve(assetsPresent);
+							}
+						});
 						//console.log(body);
-
 					}
 					else {
-						//console.log("Not present");
+						console.log("Not Found!!");
+						deferred.resolve(assetsPresent);
 					}
-					deferred.resolve(assetsPresent);
 				});
+
 				promises.push(deferred.promise);
 			});
 		});
-
+		
+		
 		Q.all(promises).then(function(data){
 			var assetsMissingBoolean = data[data.length-1];
 			var promisesRegions = [];
@@ -243,16 +305,70 @@ function checkInOtherRegions(asset){
 
 						//if given asset found in assets of that gateway
 						if(assetsInGateway.indexOf(asset) > -1){
+							
+							console.log("Asset "+ asset + " found in " + gatewayInRegion);
+							db.get(asset, function(err,body){
 
-							console.log(asset+" found in "+region);
-							deferred.resolve("Found!!");
-							//break;
+								if (body.type !== "gps") {
+
+									var trace_json = {
+										"gateway" : gatewayInRegion,
+										"timestamp" : Date.now()
+									};
+									
+									var arr = body.trace.slice();
+									arr.push(trace_json);
+									
+									var asset_json = { 
+										"type" : body.type,
+										"rules" : body.rules,
+										"trace" : arr
+									};
+
+									if (body.trace.length === 0){
+										
+							  		//Getting revision number of assets document
+							    	var rev = body._rev;
+							    	//Deleting if rev exists
+
+							    	if (typeof rev !== "undefined"){
+
+									  	db.destroy(asset, rev, function(err, body){
+									  		if (!err){
+									  			console.log(asset);
+									  			db.insert(asset_json, asset, function(err, body, header) {
+													  deferred.resolve(true);
+													});
+									  		}	
+									  	});
+									  }
+									}
+									else if (body.trace[body.trace.length-1].gateway !== gatewayInRegion){
+										var rev = body._rev;
+							    	//Deleting if rev exists
+							    	if (typeof rev !== "undefined"){
+									  	db.destroy(asset, rev, function(err, body){
+									  		if (!err){
+									  			db.insert(asset_json, asset, function(err, body, header) {
+													  deferred.resolve(true);
+													});
+									  		}
+									  	});
+									  }
+									}
+									else {
+										deferred.resolve(true);
+									}
+								}
+								else {
+									deferred.resolve(true);
+								}
+							});
 						}
 						else {
 							deferred.resolve("Missing!!");
 						}
 					});
-					
 				});
 			});
 		});
@@ -278,17 +394,23 @@ function main(){
 				var promisesX = [];
 				var promisesChecklist = [];
 				var gateways = body.gateways;
+				
 				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
 				gateways.forEach(function (gateway, gatewayIndex){
 
+					console.log("Gateways Started");
 					var promise = locationFromGateway(gateway).then(function(data){
 						return Q(true);
 					});
 					promisesX.push(promise);
+
 				});
 
 				var checklists = bodyUsername.checklists;
+
 				Q.all(promisesX).then(function(data){
+					
+					console.log("Checklist Started");
 					var promisesChecklists = [];
 					checklists.forEach(function(checklist,checklistIndex){
 						var promisecheckChecklist = checkCheckList(checklist).then(function(){
@@ -312,7 +434,7 @@ function main(){
 };
 
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
