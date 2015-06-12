@@ -305,7 +305,7 @@ function checkInOtherRegions(asset){
 					//get DOC of the gateway
 					db.get(gatewayInRegion, function(err, body){
 						if (err)
-							console.log("Error: Bakar"+err)
+							console.log("Error: Bakar"+err+"in gateway "+gatewayInRegion);
 
 						//get all assets in that gateway
 						var assetsInGateway = body.assets;
