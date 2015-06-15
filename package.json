@@ -14,7 +14,8 @@
     "q": "*",
     "body-parser": "*",
     "request": "*",
-    "forever": "*"
+    "forever": "*",
+    "forever-monitor": "*"
   },
   "repository": {}
 }
