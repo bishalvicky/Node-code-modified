@@ -13,7 +13,8 @@
     "express": "4.12.x",
     "q": "*",
     "body-parser": "*",
-    "request": "*"
+    "request": "*",
+    "forever": "*"
   },
   "repository": {}
 }
