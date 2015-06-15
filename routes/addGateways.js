@@ -15,19 +15,26 @@ router.post('/', function(req, res){
   res.send("Got a POST request!");
 
   console.log(req.body);
-  var alldata;
 
-  db.get("data", function(err, body){
-  	alldata = body;
-  	var rev;
+  enterGatewaysIntoData(req.body);
 
-  	if(typeof body != "undefined"){
+});
+
+
+function enterGatewaysIntoData(enteredInfo){
+	var alldata;
+
+  	db.get("data", function(err, body){
+    alldata = body;
+    var rev;
+
+    if(typeof body != "undefined"){
 
   		console.log("if chala");
 
   		rev = body._rev;
 
-  		var gatewayList = alldata.gateways.concat(req.body.gateways)
+  		var gatewayList = alldata.gateways.concat(enteredInfo.gateways)
   		var json = {"assets": alldata.assets, 
 					"gateways": gatewayList,
 					"regions": alldata.regions,
@@ -48,7 +55,7 @@ router.post('/', function(req, res){
 
   		console.log("else chala");
   		var json = {"assets": "", 
-					"gateways": req.body.gateways,
+					"gateways": enteredInfo.gateways,
 					"regions": "",
 					"users": ""
 		};
@@ -60,7 +67,6 @@ router.post('/', function(req, res){
   	}
 
   });
-
-});
+};
 
 module.exports = router;

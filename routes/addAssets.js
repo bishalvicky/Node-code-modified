@@ -19,13 +19,13 @@ router.post('/', function(req, res){
 
   console.log(req.body);
 
-  enterIntoData(req.body);
+  enterAssetsIntoData(req.body);
 
   createAssetDoc(req.body);
 
 });
 
-function enterIntoData(enteredInfo){
+function enterAssetsIntoData(enteredInfo){
 
   var alldata;
 
@@ -79,10 +79,6 @@ function createAssetDoc(enteredInfo){
   var ListOfAssets = enteredInfo.assets;
   var typeList = enteredInfo.type;
 
-  //console.log(enteredInfo);
-
-  //console.log(assetList[0]);
-
   ListOfAssets.forEach(function(item,j){
 
     var json = {"type": typeList[j], 
@@ -90,12 +86,7 @@ function createAssetDoc(enteredInfo){
                 "trace": []
     };
 
-        console.log("if k pehle list: "+ListOfAssets.length);
-
     db.get(ListOfAssets[j], function(err, body){
-              console.log(j);
-              console.log("if k baad list: "+ListOfAssets[j]);
-
 
       if(typeof body != "undefined"){
 
