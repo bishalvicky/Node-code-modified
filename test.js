@@ -21,7 +21,7 @@ var express = require('express'),
 //configuration for application
 var appConfig = {
     applicationId: "f1e442d6-79bb-4e42-baee-3da1d7ac583c",
-    applicationRoute: "http://node-code.mybluemix.net"
+    applicationRoute: "http://node-code.mybluemix.net",
     applicationSecret: "d59b875fbe53ed4340df9304747bf182d2bba0ea"
 };
 // create an express app
