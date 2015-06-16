@@ -66,7 +66,7 @@ app.all('*', function(req, res, next) {
 
 // create resource URIs
 // endpoint: https://mobile.ng.bluemix.net/${appHostName}/v1/apps/${applicationId}/notifyOtherDevices/
-app.post('/notifyOtherDevices', function(req,res) {
+appContext.post('/notifyOtherDevices', function(req,res) {
 	var results = 'Sent notification to all registered devices successfully.';
 
 	console.log("Trying to send push notification via JavaScript Push SDK");
