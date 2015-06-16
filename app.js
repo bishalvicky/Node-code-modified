@@ -3,10 +3,16 @@ var cfenv = require('cfenv');
 var Q = require('q');
 var appEnv = cfenv.getAppEnv();
 var request = require('request');
+var ibmbluemix = require('ibmbluemix'),
+var ibmpush = require('ibmpush');
 
 var user = "a-jq3b5v-nyywcig5q2";
 var pass = "vAlx3YAaFY2xJ!8*Gf";
 
+var appConfig = {
+    applicationId: "f1e442d6-79bb-4e42-baee-3da1d7ac583c",
+    applicationRoute: "http://node-code.mybluemix.net"
+};
 
 var app = express();
 var cloudant;
@@ -441,7 +447,7 @@ function main(){
 };
 
 
-var debug = true;
+var debug = FALSE;
 if (debug){
 	main();
 }

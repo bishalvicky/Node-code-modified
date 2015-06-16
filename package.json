@@ -15,7 +15,9 @@
     "body-parser": "*",
     "request": "*",
     "forever": "*",
-    "forever-monitor": "*"
+    "forever-monitor": "*",
+    "ibmpush":"*",
+    "ibmbluemix":"*"
   },
   "repository": {}
 }

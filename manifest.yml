@@ -2,7 +2,7 @@ applications:
 - disk_quota: 1024M
   host: node-code
   name: Node Code
-  command: node server.js
+  command: node test.js
   path: .
   domain: mybluemix.net
   instances: 1
