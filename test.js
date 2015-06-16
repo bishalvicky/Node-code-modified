@@ -40,19 +40,23 @@ app.use(bodyparser.urlencoded({
 ibmbluemix.initialize(appConfig);
 var logger = ibmbluemix.getLogger();
 
+/*
 app.use(function(req, res, next) {
 	console.log("Using...");
 	req.ibmpush = ibmpush.initializeService(req);
 	req.logger = logger;
 	next();
 });
+*/
 
+ibmpush.initializeService();
 //initialize ibmconfig module
 var ibmconfig = ibmbluemix.getConfig();
 
 //get context root to deploy your application
 //the context root is '${appHostName}/v1/apps/${applicationId}'
 var contextRoot = ibmconfig.getContextRoot();
+
 appContext=express.Router();
 app.use(contextRoot, appContext);
 
@@ -64,9 +68,20 @@ app.all('*', function(req, res, next) {
 	next();
 });
 
+
+ibmpush.sendBroadcastNotification(message,null).then(function (response) {
+	console.log("Notification sent successfully to all devices.", response);
+	res.send("Sent notification to all registered devices.");
+}, function(err) {
+	console.log("Failed to send notification to all devices.");
+	console.log(err);
+	res.send(400, {reason: "An error occurred while sending the Push notification.", error: err});
+});
+
 // create resource URIs
 // endpoint: https://mobile.ng.bluemix.net/${appHostName}/v1/apps/${applicationId}/notifyOtherDevices/
-appContext.post('/notifyOtherDevices', function(req,res) {
+
+/*appContext.post('/notifyOtherDevices', function(req,res) {
 	var results = 'Sent notification to all registered devices successfully.';
 
 	console.log("Trying to send push notification via JavaScript Push SDK");
@@ -83,6 +98,7 @@ appContext.post('/notifyOtherDevices', function(req,res) {
 		res.send(400, {reason: "An error occurred while sending the Push notification.", error: err});
 	});
 });
+*/
 
 // host static files in public folder
 // endpoint:  https://mobile.ng.bluemix.net/${appHostName}/v1/apps/${applicationId}/static/
