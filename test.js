@@ -49,7 +49,7 @@ app.use(function(req, res, next) {
 });
 */
 
-ibmpush.initializeService();
+var push = ibmpush.initializeService();
 //initialize ibmconfig module
 var ibmconfig = ibmbluemix.getConfig();
 
@@ -68,8 +68,11 @@ app.all('*', function(req, res, next) {
 	next();
 });
 
+var message = { "alert" : "The BlueList has been updated.",
+					"url": "http://www.google.com"
+};
 
-ibmpush.sendBroadcastNotification(message,null).then(function (response) {
+push.sendBroadcastNotification(message,null).then(function (response) {
 	console.log("Notification sent successfully to all devices.", response);
 	res.send("Sent notification to all registered devices.");
 }, function(err) {
