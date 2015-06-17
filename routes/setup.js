@@ -53,7 +53,6 @@ router.get('/', function(req, res){
 			else {
 				console.log(mapInfo[0]);
 				response.end("");
-				
 			}
 		});
 	}
