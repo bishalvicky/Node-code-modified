@@ -74,6 +74,7 @@ var message = { "alert" : "The BlueList has been updated.",
 
 push.sendBroadcastNotification(message,null).then(function (response) {
 	console.log("Notification sent successfully to all devices.", response);
+	//res.send("Sent notification to all registered devices.");
 }, function(err) {
 	console.log("Failed to send notification to all devices.");
 	console.log(err);

@@ -3,7 +3,7 @@ var cfenv = require('cfenv');
 var Q = require('q');
 var appEnv = cfenv.getAppEnv();
 var request = require('request');
-var ibmbluemix = require('ibmbluemix'),
+var ibmbluemix = require('ibmbluemix');
 var ibmpush = require('ibmpush');
 
 var user = "a-jq3b5v-nyywcig5q2";
@@ -447,7 +447,7 @@ function main(){
 };
 
 
-var debug = FALSE;
+var debug = false;
 if (debug){
 	main();
 }
