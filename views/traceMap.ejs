@@ -19,10 +19,11 @@
     function initialize(locations) {
 
   
+  tester();
 
   var loc_len = Math.floor(locations.length/2);
 
-  console.log(loc_len);
+  //console.log(loc_len);
 
   var mapOptions = {
     zoom: 11,
@@ -85,6 +86,7 @@
   });
 
   tracePath.setMap(map);
+
  
 };
 
@@ -96,12 +98,27 @@ var locations = [
     ['5', 28.950198, 77.259302]
 ];
 
+function tester(){
+	//var loc = $("#content").html();
+
+	var temp = <%= JSON.stringify(content) %>;
+	//var loc = JSON.parse(temp);
+
+
+	console.log(temp);
+
+	console.log("tetsting");
+};
+
+
+//console.log("loc rcvd: "+loc);
+
 google.maps.event.addDomListener(window, 'load', function(){ initialize(locations); });</script>
 
   </head>
   <body>
-	<%= content %>
-
+	
+<%= content %>
     <div id="map-canvas"></div>
   </body>
 </html>
