@@ -7,8 +7,8 @@ router.use(function log(req, res, next){
 });
 
 router.get('/', function(req, res){
-	res.render('index',{
-		title:"Home page", 
+	res.render('traceMap',{
+		title:"Home page TW", 
 		content: "Hello World"
 	});
 });
