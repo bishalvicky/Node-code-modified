@@ -47,7 +47,7 @@ router.get('/', function(req, res){
 
 		deferred.promise.then(function(data){
 			if (typeof data['cursorId'] !== "undefined"){
-				console.log(pages);
+				
 				getTrace(data['cursorId'], data['cookie']);
 			}
 			else {
