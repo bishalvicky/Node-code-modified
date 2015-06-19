@@ -5,6 +5,7 @@ var appEnv = cfenv.getAppEnv();
 var request = require('request');
 var ibmbluemix = require('ibmbluemix');
 var ibmpush = require('ibmpush');
+var geojson = require('geojson-utils');
 
 var user = "a-jq3b5v-nyywcig5q2";
 var pass = "vAlx3YAaFY2xJ!8*Gf";
@@ -55,8 +56,6 @@ app.use('/checklist', checklist);
 
 function initDBConnection() {
 
-	
-
 	if(process.env.VCAP_SERVICES) {
 		var vcapServices = JSON.parse(process.env.VCAP_SERVICES);
 		if(vcapServices.cloudantNoSQLDB) {
@@ -88,7 +87,7 @@ function initDBConnection() {
 initDBConnection();
 
 
-function locationFromGateway(gateway){
+function assetListFromGateway(gateway){
 	var deferred = Q.defer();
 	var options = {
 	  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
@@ -141,71 +140,126 @@ function locationFromGateway(gateway){
 	});
 	return deferred.promise;
 }
+// Form array of gateways in regions
+function listOfGatewaysAndRegions(checklist){
+	//var deferred = Q.defer();            
+	assets = checklist.assets;
+	
+	//check all assets availability in the given regions
+	for (var asset = 0; asset < assets.length; asset++)
+		assetsPresent.push(false);
+
+	//read regions from checklist
+	var regions = checklist.regions;
+	var gateways = [];
+	var promises = [];
+	var regionPolygons = [];
+
+	//find out all the gateways in the given regions
+	regions.map(function(item){
+
+		var deferred = Q.defer();
+		//append gateways in the given regions
+		db.get(item,function(err, body){
+			//console.log("Adding Region:" + item);
+			gateways = gateways.concat(body.gateways);
+			var region_json = {
+				"region": item,
+				"type": "Polygon",
+				"coordinates": item.coordinates
+			}
+
+			regionPolygons = regionPolygons.push(region_json);
+			var gatewaysAndRegions = {
+				"gateways": gateways,
+				"regions": regionPolygons
+			}
+
+			deferred.resolve(gatewaysAndRegions);
+		});
+
+		promises.push(deferred.promise);
+	});
+
+	return Q.all(promises);               
+}
+
+function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
+	var promisesGateways = [];
+
+	gateways.forEach(function(gateway, gatewayIndex){
+
+		var deferredGateway = Q.defer();
+		db.get(gateway, function(err, body){
+
+			//if asset present in this gateway
+			if (body.assets.indexOf(asset) > - 1){
+				console.log(asset+" is present in "+gateways[gatewayIndex]);
+				assetsPresent[assetIndex] = true;
+				addToTrace(asset, gateway).then(function(){
+					deferredGateway.resolve(true);
+				});
+			}
+			else {
+				//console.log("Not Found!!");
+				deferredGateway.resolve(true);
+			}
+		});
+
+		promisesGateways.push(deferredGateway.promise);
+	});
+	return Q.all(promisesGateways);
+}
+
+function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
+	var tukdeAsset = asset.split("_");
+	var gateway = "gateway"+"_"+tukdeAsset[1];
+	var promises = [];
+	var deferred = Q.defer();
+	
+	db.get(gateway, { revs_info: true }, function(err, body) {
+
+		regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
+			var contains = geojson.pointInPolygon(body,regionPolygon);
+			if (contains)
+				assetsPresent[assetIndex] = true;
+		});
+		
+		deferred.resolve(true);
+	});
+
+	return deferred.promise;
+}
 
 function checkCheckList(checklist){
 	var deferredCheckList = Q.defer();
 	var assets;
 	var assetsPresent = [];
 
-	// Form array of gateways in regions
-	function checkCheckList(){
-		//var deferred = Q.defer();            
-		assets = checklist.assets;
+	listOfGatewaysAndRegions().spread(function(data){
 		
-		//check all assets availability in the given regions
-		for (var asset = 0; asset < assets.length; asset++)
-			assetsPresent.push(false);
+		var gateways = data.gateways;
+		var regions = data.regions;
 
-		//read regions from checklist
-		var regions = checklist.regions;
-		var gateways = [];
 		var promises = [];
-
-		//find out all the gateways in the given regions
-		regions.map(function(item){
-
-			var deferred = Q.defer();
-			//append gateways in the given regions
-			db.get(item,function(err, body){
-				//console.log("Adding Region:" + item);
-				gateways = gateways.concat(body.gateways);
-				deferred.resolve(gateways);
-			});
-
-			promises.push(deferred.promise);
-		});
-
-		return Q.all(promises);               
-	};
-
-	checkCheckList().spread(function(gateways){
-		var promises = [];
-
 		//for each asset
 		assets.forEach(function(asset, assetIndex){
 
-			//check asset in each gateway
-			gateways.forEach(function(gateway, gatewayIndex){
+			var deferred_asset = Q.defer();
 
-				var deferred = Q.defer();
-				db.get(gateway, function(err, body){
-
-					//if asset present in this gateway
-					if (body.assets.indexOf(asset) > - 1){
-						console.log(asset+" is present in "+gateways[gatewayIndex]);
-						assetsPresent[assetIndex] = true;
-						addToTrace(asset, gateway).then(function(){
-							deferred.resolve(true);
-						});
-					}
-					else {
-						//console.log("Not Found!!");
-						deferred.resolve(true);
-					}
-				});
-
-				promises.push(deferred.promise);
+			db.get(asset, function(err, bodyAsset){
+				if (body.type !== "gps"){
+					checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex).then(function(){
+						deferred_asset.resolve(true);
+					});
+				}
+				else {
+					checkGPSinRegions(asset, regions, assetsPresent, assetIndex).then(function(){
+						deferred_asset.resolve(true);
+					});
+				}
 			});
+			promises.push(deferred_asset.promise);
 		});
 		
 		
@@ -379,7 +433,7 @@ function main(){
 				gateways.forEach(function (gateway, gatewayIndex){
 					var deferredPromise = Q.defer();
 					//console.log("Gateways Started");
-					locationFromGateway(gateway).then(function(data){
+					assetListFromGateway(gateway).then(function(data){
 						deferredPromise.resolve(true);
 					});
 					promisesX.push(deferredPromise.promise);
@@ -414,13 +468,13 @@ function main(){
 	});
 };
 
-
-
-var debug = true;
+var debug = false;
 if (debug){
 	main();
 }
 
+//var a = geojson.pointInPolygon({"type":"Point","coordinates":[3,3]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]});
+//console.log(a);
 
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {
