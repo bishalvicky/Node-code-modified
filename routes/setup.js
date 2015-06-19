@@ -1,25 +1,27 @@
 var express = require('express');
 var router = express.Router();
 var request = require('request');
-var gateway = "gateway_9cd1c39d10f0";
+var gateway = "gateway_8cd1c39d10f0";
 var user = "a-jq3b5v-nyywcig5q2";
 var pass = "vAlx3YAaFY2xJ!8*Gf";
+
 var str="";
 var Q = require('q');
 var pages = 1;
+
 router.use(function log(req, res, next){
-	console.log("Hello");
   next();
 });
 
 router.get('/', function(req, res){
-
+	var mapInfo = [];
 	var endTime = Date.now();
 	var oneDay = 86400000;
 	var oneMinute = 60000;
 	var startTime = endTime - oneDay;
 
 	function getTrace(cursorId, cookie){
+		console.log("getTrace");
 		var deferred = Q.defer();
 		var options = {
 		  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?start='+startTime+'&end='+endTime,
@@ -33,6 +35,7 @@ router.get('/', function(req, res){
 		request(options, function(error, response, html){
 			pages++;
 			res.write(html+"\n\n\n\n\n\n");
+			mapInfo.push(JSON.parse(html));
 			//str += html+"<br><br><br><br><br>";
 			cursorId = response.headers.cursorid;
 			var data = {
@@ -43,9 +46,13 @@ router.get('/', function(req, res){
 		});
 
 		deferred.promise.then(function(data){
-			if (typeof data['cursorId'] !== "undefined" && pages <= 15){
-				console.log(pages);
+			if (typeof data['cursorId'] !== "undefined"){
+				
 				getTrace(data['cursorId'], data['cookie']);
+			}
+			else {
+				console.log(mapInfo[0]);
+				response.end("");
 			}
 		});
 	}
@@ -62,8 +69,16 @@ router.get('/', function(req, res){
 		var cursorId = response.headers.cursorid;
 		var cookie = response.headers['set-cookie'][0];
 		res.write(html+"\n\n\n\n\n\n");
-	
-		getTrace(cursorId, cookie);
+		mapInfo.push(JSON.parse(html));
+
+		if (typeof cursorId !== "undefined"){
+			getTrace(cursorId, cookie);
+		}
+		else {
+			console.log(mapInfo[0]);
+			res.end("");
+
+		}
 		//var str = JSON.parse(html);
 	});
 });

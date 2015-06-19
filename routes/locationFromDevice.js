@@ -7,7 +7,10 @@ router.use(function log(req, res, next){
 });
 
 router.get('/', function(req, res){
-
+	res.render('index',{
+		title:"Home page", 
+		content: "Hello World"
+	});
 });
 
 router.post('/', function(req, res){
