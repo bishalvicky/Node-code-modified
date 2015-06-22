@@ -474,7 +474,7 @@ function main(){
 	});
 };
 
-var debug = true;
+var debug = false;
 if (debug){
 	main();
 }
