@@ -142,15 +142,13 @@ function assetListFromGateway(gateway){
 }
 // Form array of gateways in regions
 function listOfGatewaysAndRegions(checklist){
-	//var deferred = Q.defer();            
-	assets = checklist.assets;
-	
-	//check all assets availability in the given regions
-	for (var asset = 0; asset < assets.length; asset++)
-		assetsPresent.push(false);
+	//var deferred = Q.defer();  
 
+	console.log("yahan!!!");
 	//read regions from checklist
 	var regions = checklist.regions;
+
+	//console.log(regions);
 	var gateways = [];
 	var promises = [];
 	var regionPolygons = [];
@@ -174,7 +172,7 @@ function listOfGatewaysAndRegions(checklist){
 				"gateways": gateways,
 				"regions": regionPolygons
 			}
-
+			console.log("Here:\n" + gatewaysAndRegions + "\n\n");
 			deferred.resolve(gatewaysAndRegions);
 		});
 
@@ -232,12 +230,20 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 }
 
 function checkCheckList(checklist){
+
 	var deferredCheckList = Q.defer();
 	var assets;
 	var assetsPresent = [];
 
-	listOfGatewaysAndRegions().spread(function(data){
+	assets = checklist.assets;
+	console.log(assets.length);
+	//check all assets availability in the given regions
+	for (var asset = 0; asset < assets.length; asset++)
+		assetsPresent.push(false);
+
+	listOfGatewaysAndRegions(checklist).spread(function(data){
 		
+		//console.log("Yahan!!!!!!");
 		var gateways = data.gateways;
 		var regions = data.regions;
 
@@ -248,7 +254,7 @@ function checkCheckList(checklist){
 			var deferred_asset = Q.defer();
 
 			db.get(asset, function(err, bodyAsset){
-				if (body.type !== "gps"){
+				if (bodyAsset.type !== "gps"){
 					checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex).then(function(){
 						deferred_asset.resolve(true);
 					});
@@ -428,7 +434,7 @@ function main(){
 				var promisesX = [];
 				var promisesChecklist = [];
 				var gateways = body.gateways;
-				
+				console.log(gateways);
 				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
 				gateways.forEach(function (gateway, gatewayIndex){
 					var deferredPromise = Q.defer();
@@ -443,7 +449,7 @@ function main(){
 
 				Q.all(promisesX).then(function(data){
 					
-					//console.log("Checklist Started:");
+					console.log("Checklist Started:");
 					var promisesChecklists = [];
 					checklists.forEach(function(checklist,checklistIndex){
 						var promisecheckChecklist = Q.defer();
@@ -468,7 +474,7 @@ function main(){
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
