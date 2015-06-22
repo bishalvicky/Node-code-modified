@@ -98,53 +98,60 @@ function assetListFromGateway(gateway){
 
 	request(options, function(error, response, html){
 
-		var json = JSON.parse(html);
-		//console.log(json);
-		var data = json[0].evt;
-		
-		var assets = data.assets.split(" , ");
-		var latitude = data.latitude;
-		var longitude = data.longitude;
-		var altitude = data.altitude;
+		if(!error){
+			var json = JSON.parse(html);
+			//console.log(json);
+			var data = json[0].evt;
+			
+			var assets = data.assets.split(" , ");
+			var latitude = data.latitude;
+			var longitude = data.longitude;
+			var altitude = data.altitude;
 
-		var json_point = {
-			"type": "Point",
-			"coordinates": [latitude, longitude, altitude],
-			"assets": assets
+			var json_point = {
+				"type": "Point",
+				"coordinates": [latitude, longitude, altitude],
+				"assets": assets
+			}
+
+			db.get(gateway, function(err, body) {
+
+			  	if (!err){
+						json_point._rev = body._rev;
+						db.insert(json_point,gateway,function(err,body){
+							if(!err)
+								console.log('Updated Doc: ' + gateway);
+							else
+								console.log("Gateway Update Error: " + gateway);
+							deferred.resolve(true);
+						});
+		  		}
+
+			  	else {
+		  			db.insert(json_point,gateway,function(err,body){
+							if(!err)
+								console.log('Updated Doc: ' + gateway);
+							else
+								console.log("Gateway Update Error: " + gateway);
+							deferred.resolve(true);
+						});
+		  		}
+			});	
 		}
-
-		db.get(gateway, { revs_info: true }, function(err, body) {
-
-		  	if (!err){
-				json_point._rev = body._rev;
-				db.insert(json_point,gateway,function(err,body){
-					if(!err)
-						console.log('Updated Doc: ' + gateway);
-					else
-						console.log("Gateway Update Error: " + gateway);
-					deferred.resolve(true);
-				});
-	  		}
-
-		  	else {
-	  			db.insert(json_point,gateway,function(err,body){
-					if(!err)
-						console.log('Updated Doc: ' + gateway);
-					else
-						console.log("Gateway Update Error: " + gateway);
-					deferred.resolve(true);
-				});
-	  		}
-
-		});	
+		else{
+			deferred.resolve(false);
+			console.log("URL ERROR!!!")
+		}
+			
 	});
 	return deferred.promise;
 }
+
+
 // Form array of gateways in regions
 function listOfGatewaysAndRegions(checklist){
 	//var deferred = Q.defer();  
 
-	console.log("yahan!!!");
 	//read regions from checklist
 	var regions = checklist.regions;
 
@@ -161,30 +168,36 @@ function listOfGatewaysAndRegions(checklist){
 		db.get(item,function(err, body){
 			//console.log("Adding Region:" + item);
 			gateways = gateways.concat(body.gateways);
+			// console.log("HERE----" + item.coordinates);
 			var region_json = {
 				"region": item,
 				"type": "Polygon",
-				"coordinates": item.coordinates
+				"coordinates": body.coordinates
 			}
 
-			regionPolygons = regionPolygons.push(region_json);
-			var gatewaysAndRegions = {
-				"gateways": gateways,
-				"regions": regionPolygons
-			}
-			console.log("Here:\n" + gatewaysAndRegions + "\n\n");
-			deferred.resolve(gatewaysAndRegions);
+			regionPolygons.push(region_json);
+			
+			deferred.resolve(true);
 		});
 
 		promises.push(deferred.promise);
 	});
-
-	return Q.all(promises);               
+	
+	var deferredBla = Q.defer();
+	Q.all(promises).then(function(){
+		
+		var gatewaysAndRegions = {
+			"gateways": gateways,
+			"regions": regionPolygons
+		}
+		deferredBla.resolve(gatewaysAndRegions);
+	});
+	return deferredBla.promise;
 }
 
 function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
 	var promisesGateways = [];
-
+	var message_alert;
 	gateways.forEach(function(gateway, gatewayIndex){
 
 		var deferredGateway = Q.defer();
@@ -194,10 +207,11 @@ function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
 			if (body.assets.indexOf(asset) > - 1){
 				console.log(asset+" is present in "+gateways[gatewayIndex]);
 				assetsPresent[assetIndex] = true;
-				addToTrace(asset, gateway).then(function(){
+				message_alert = asset+": Now present in "+gateways[gatewayIndex];
+				addToTraceAndNotify(asset, gateway, message_alert).then(function(){
 					deferredGateway.resolve(true);
 				});
-			}
+			}	
 			else {
 				//console.log("Not Found!!");
 				deferredGateway.resolve(true);
@@ -214,13 +228,18 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 	var gateway = "gateway"+"_"+tukdeAsset[1];
 	var promises = [];
 	var deferred = Q.defer();
-	
-	db.get(gateway, { revs_info: true }, function(err, body) {
+
+	//console.log(gateway);
+	db.get(gateway, function(err, body) {
+		//console.log(JSON.stringify(body));
 
 		regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
 			var contains = geojson.pointInPolygon(body,regionPolygon);
-			if (contains)
+			if (contains){
 				assetsPresent[assetIndex] = true;
+				console.log(asset+" is present in "+regionPolygon.region)
+			}
+				
 		});
 		
 		deferred.resolve(true);
@@ -236,19 +255,19 @@ function checkCheckList(checklist){
 	var assetsPresent = [];
 
 	assets = checklist.assets;
-	console.log(assets.length);
 	//check all assets availability in the given regions
 	for (var asset = 0; asset < assets.length; asset++)
 		assetsPresent.push(false);
 
-	listOfGatewaysAndRegions(checklist).spread(function(data){
-		
-		//console.log("Yahan!!!!!!");
+	listOfGatewaysAndRegions(checklist).then(function(data){
+
+		//console.log(JSON.stringify(data));
 		var gateways = data.gateways;
 		var regions = data.regions;
 
 		var promises = [];
 		//for each asset
+		//console.log(assets);
 		assets.forEach(function(asset, assetIndex){
 
 			var deferred_asset = Q.defer();
@@ -278,9 +297,28 @@ function checkCheckList(checklist){
 				if (!assetBoolean){
 					console.log("Missing Asset: " + assets[assetBooleanIndex]);
 					var promiseCheckInOtherRegions = Q.defer();
-					checkInOtherRegions(assets[assetBooleanIndex]).then(function(){
-						promiseCheckInOtherRegions.resolve(true);
+
+
+					db.get(assets[assetBooleanIndex], function(err,body){
+						
+						if(!err){
+							if(body.type == "gps"){
+								checkInOtherRegionsGPS(assets[assetBooleanIndex],checklist.regions).then(function(){
+									promiseCheckInOtherRegions.resolve(true);
+								});
+							}
+							else{
+								checkInOtherRegions(assets[assetBooleanIndex],checklist.regions).then(function(){
+									promiseCheckInOtherRegions.resolve(true);
+								});
+							}
+						}
+						else{
+							promiseCheckInOtherRegions.resolve(true);
+						}
+
 					});
+					
 					promisesRegions.push(promiseCheckInOtherRegions.promise);
 				}
 			});
@@ -295,9 +333,129 @@ function checkCheckList(checklist){
 }
 
 
-function addToTrace(asset,gateway){
+function checkInOtherRegions(asset,checkedRegions){
+	var found = 0;
+	var deferred = Q.defer();
+	var message_alert;
+	//get all regions from data file
+	//db.get("data", function(err, body){
+		var regions = globalRegions;
 
-	console.log("AddToTrace");
+		var promises = [];
+		//for all regions
+		regions.forEach(function(region, regionIndex){
+			
+			var deferred_found = Q.defer();
+			if(checkedRegions.indexOf(region)<0){
+				// console.log("Checking for " + asset + " in "+ region);
+				//get DOC of the region
+				db.get(region, function(err, body){
+
+					//get all gateways in that region
+					var gatewaysInRegion = body.gateways;
+					
+					var promiseRegion = function(){
+						var promisesGateways = [];
+						//for all gateways in that region
+						gatewaysInRegion.forEach(function(gatewayInRegion, gatewaysInRegionIndex){
+
+							var deferredGateway = Q.defer();
+							//get DOC of the gateway
+							db.get(gatewayInRegion, function(err, body){
+								//get all assets in that gateway
+								var assetsInGateway = body.assets;
+
+								//if given asset found in assets of that gateway
+								if(assetsInGateway.indexOf(asset) > -1){
+									found = 1;
+									message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
+									console.log(message_alert);
+									addToTraceAndNotify(asset,gatewayInRegion,message_alert).then(function(){
+										deferredGateway.resolve(true);
+									});
+								}
+								else {
+									deferredGateway.resolve(true);
+								}
+							});
+							promisesGateways.push(deferredGateway.promise);
+						});
+						return Q.all(promisesGateways);
+					}
+					promiseRegion().then(function(){
+						deferred_found.resolve(true);
+					});
+				});
+			}
+			else
+				deferred_found.resolve(true);
+			
+			promises.push(deferred_found.promise);
+		});
+
+		Q.all(promises).then(function(){
+			if(found == 0){
+				message_alert = "Missing Asset: "+asset+ " Not found anywhere!!";
+				console.log(message_alert);
+				addToTraceAndNotify(asset,"Missing",message_alert).then(function(){
+					deferred.resolve(true);
+				});
+			}
+			else
+				deferred.resolve(true);
+		});
+	//});
+	return deferred.promise;
+};
+
+function checkInOtherRegionsGPS(asset,checkedRegions){
+	
+	var found = 0;
+	var tukdeAsset = asset.split("_");
+	var gateway = "gateway"+"_"+tukdeAsset[1];
+	var regions = globalRegions;
+	var deferred_fun = Q.defer();
+
+	db.get(gateway,function(err,body){
+		if(!err){
+			var promises = [];
+			regions.forEach(function(region,regionIndex){
+				var deferred = Q.defer();
+				db.get(region,function(err,bodyRegion){
+					if(checkedRegions.indexOf(region)<0){
+						
+						var contains = geojson.pointInPolygon(body,bodyRegion);
+						//console.log(body.coordinates + " in " + bodyRegion.coordinates + "-" + contains);
+						if(contains){
+							found = 1;
+							console.log("Missing Asset:" + asset + " Found in region:" + region);
+							deferred.resolve(true);
+						}
+					}
+					deferred.resolve(true);				
+				});
+				promises.push(deferred.promise);
+			});
+
+			Q.all(promises).then(function(data){
+				if(!found){
+					console.log("Missing Asset:" + asset + " Not Found Anywhere!!");
+				}
+				deferred_fun.resolve(true);
+			});
+			
+		}
+		else{
+			deferred_fun.resolve(true);
+		}
+	});
+	return deferred_fun.promise;
+}
+
+
+function addToTraceAndNotify(asset,gateway,message_alert){
+
+	// console.log("addToTraceAndNotify");
 	var deferred = Q.defer();
 	db.get(asset, function(err,body){
 
@@ -318,7 +476,7 @@ function addToTrace(asset,gateway){
 
 		var message = { 
 			//"alert" : "Missing Asset: "+ asset + "	Now in Gateway:" + gateway ,
-			"alert": "Testing",
+			"alert": message_alert,
 			"url": "http://www.google.com"
 		};
 		//console.log(body.trace, body.trace.length);
@@ -351,70 +509,6 @@ function addToTrace(asset,gateway){
 	return deferred.promise;
 };
 
-function checkInOtherRegions(asset){
-	var regions;
-	var found = 0;
-	var deferred = Q.defer();
-	//get all regions from data file
-	db.get("data", function(err, body){
-		regions = body.regions;
-
-		var promises = [];
-		//for all regions
-		regions.forEach(function(region, regionIndex){
-			
-			var deferred_found = Q.defer();
-			//get DOC of the region
-			db.get(region, function(err, body){
-
-				//get all gateways in that region
-				var gatewaysInRegion = body.gateways;
-				
-				var promiseRegion = function(){
-					var promisesGateways = [];
-					//for all gateways in that region
-					gatewaysInRegion.forEach(function(gatewayInRegion, gatewaysInRegionIndex){
-
-						var deferredGateway = Q.defer();
-						//get DOC of the gateway
-						db.get(gatewayInRegion, function(err, body){
-							//get all assets in that gateway
-							var assetsInGateway = body.assets;
-
-							//if given asset found in assets of that gateway
-							if(assetsInGateway.indexOf(asset) > -1){
-								found = 1;
-								console.log("Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]");
-								addToTrace(asset,gatewayInRegion).then(function(){
-									deferredGateway.resolve(true);
-								});
-							}
-							else {
-								deferredGateway.resolve(true);
-							}
-						});
-						promisesGateways.push(deferredGateway.promise);
-					});
-					return Q.all(promisesGateways);
-				}
-				promiseRegion().then(function(){
-					deferred_found.resolve(true);
-				});
-			});
-			promises.push(deferred_found.promise);
-		});
-
-		Q.all(promises).then(function(){
-			if(found == 0){
-				console.log("Missing Asset: "+asset+ " Not found anywhere!!");
-				addToTrace(asset,"Missing").then(function(){
-					deferred.resolve(true);
-				});
-			}
-		});
-	});
-	return deferred.promise;
-};
 
 
 function main(){
@@ -423,6 +517,7 @@ function main(){
 	//Get the name of the logged in user from session
 	var username = "skjindal93";
 	var password = "hehe"; //Password filled by user
+	var ERROR = false; 
 	
 
 	db.get(username, function(err, bodyUsername){
@@ -431,15 +526,17 @@ function main(){
 			//Authenticated
 			
 			db.get("data", function(err, body){
+				globalRegions = body.regions;
 				var promisesX = [];
 				var promisesChecklist = [];
 				var gateways = body.gateways;
-				console.log(gateways);
 				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
 				gateways.forEach(function (gateway, gatewayIndex){
 					var deferredPromise = Q.defer();
 					//console.log("Gateways Started");
 					assetListFromGateway(gateway).then(function(data){
+						if(!data)
+							ERROR = true;
 						deferredPromise.resolve(true);
 					});
 					promisesX.push(deferredPromise.promise);
@@ -449,21 +546,28 @@ function main(){
 
 				Q.all(promisesX).then(function(data){
 					
-					console.log("Checklist Started:");
-					var promisesChecklists = [];
-					checklists.forEach(function(checklist,checklistIndex){
-						var promisecheckChecklist = Q.defer();
-						checkCheckList(checklist).then(function(){
-							promisecheckChecklist.resolve(true);
+					if(!ERROR){
+						console.log("Checklist Started:");
+						var promisesChecklists = [];
+						checklists.forEach(function(checklist,checklistIndex){
+							var promisecheckChecklist = Q.defer();
+							checkCheckList(checklist).then(function(){
+								promisecheckChecklist.resolve(true);
+							});
+							promisesChecklists.push(promisecheckChecklist.promise);
 						});
-						promisesChecklists.push(promisecheckChecklist.promise);
-					});
-					Q.all(promisesChecklists).then(function(){
-						//console.log("Length: "+promisesChecklists.length);
-						//callback();
+						Q.all(promisesChecklists).then(function(){
+							//console.log("Length: "+promisesChecklists.length);
+							//callback();
+							deferredMain.resolve("Main Done");
+							console.log("Main Done!!");
+						});
+					}
+					else{
 						deferredMain.resolve("Main Done");
-						console.log("Main Done!!")
-					});
+						console.log("Main Done with error!!");
+					}
+					
 				});
 
 			});
@@ -479,8 +583,10 @@ if (debug){
 	main();
 }
 
-//var a = geojson.pointInPolygon({"type":"Point","coordinates":[3,3]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]});
-//console.log(a);
+//  var a = gju.pointInPolygon({"type":"Point","coordinates":[10,11,16]},{"type":"Polygon", "coordinates":[[[7,7],[12,7],[12,12],[7,12]]]})
+// console.log(a);
+
+// console.log(JSON.stringify(b));
 
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {

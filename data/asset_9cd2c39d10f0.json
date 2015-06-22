@@ -1,5 +1,5 @@
 {
-	"type": "rfid",
+	"type": "gps",
 	"rules": "",
 	"trace": []
 }

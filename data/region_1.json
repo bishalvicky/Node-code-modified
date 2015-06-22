@@ -1,8 +1,10 @@
 {
+	"type":"Polygon",
 	"latitudeStart": 12,
 	"longitudeStart": 77,
 	"latitudeEnd": 14,
 	"longitudeEnd": 79,
 	"altitude":30,
+	"coordinates":[[[0,0],[6,0],[6,6],[0,6]]],
 	"gateways": ["gateway_7cd1c39d10f0", "gateway_8cd1c39d10f0"]
 }

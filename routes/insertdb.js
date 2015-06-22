@@ -57,6 +57,9 @@ router.get('/', function(req, res){
 	createDoc("asset_7cd2c39d10f0");
 	createDoc("asset_8cd2c39d10f0");
 	createDoc("asset_9cd2c39d10f0");
+	createDoc("asset_7cd1c39d10f0");
+	createDoc("asset_8cd1c39d10f0");
+	createDoc("asset_9cd1c39d10f0");
 
 	//Checklist
 	createDoc("skjindal93");

@@ -3,8 +3,14 @@
 	"checklists":
 		[
 			{
-				"assets": ["asset_5cd2c39d10f0", "asset_6cd2c39d10f0"],
+				"assets": ["asset_7cd1c39d10f0", "asset_8cd1c39d10f0"],
 				"regions": ["region_1"]
+			},
+			
+			{
+				"assets": ["asset_9cd1c39d10f0"],
+				"regions": ["region_2"]
 			}
+
 		]
 }
