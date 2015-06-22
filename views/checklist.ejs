@@ -1,0 +1,89 @@
+<html>
+<head>
+<title><%= title %></title>
+
+<link rel="stylesheet" href="public/css/bootstrap.min.css">
+<link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="public/css/normalize.css">
+<link rel="stylesheet" href="public/css/stylesheet.css">
+<link rel="stylesheet" href="public/css/selectize.default.css">
+
+<script src="public/js/jquery.js"></script>
+<script src="public/js/bootstrap.min.js"></script>
+<script src="public/js/selectize.js"></script>
+
+<script type="text/javascript">
+	$(document).ready(function(){
+		var options = <%- JSON.stringify(content) %>;
+		var regionsData = [];
+		var assetsData = [];
+		for (var i = 0; i < options.regions.length; i++){
+			regionsData.push({region: options.regions[i], description: options.regions[i]});
+		}
+		for (var j = 0; j < options.assets.length; j++){
+			assetsData.push({asset: options.assets[j], description: options.assets[j]});
+		}
+
+		$('#select-regions').selectize({
+			maxItems: null,
+			valueField: 'region',
+			labelField: 'description',
+			searchField: 'region',
+			options: regionsData,
+			create: false
+		});
+
+		$('#select-assets').selectize({
+			maxItems: null,
+			valueField: 'asset',
+			labelField: 'description',
+			searchField: 'asset',
+			options: assetsData,
+			create: false
+		});
+		
+		$wrapper = $(".checklist_1");
+		var sendRegions = [];
+		var sendAssets = [];
+		$('select.selectized,input.selectized', $wrapper).each(function() {
+			var $input = $(this);
+			var update = function(e) { 
+				console.log(JSON.stringify($input.val()));
+			}
+			$(this).on('change', update);
+			update();
+		});
+	});
+</script>
+</head>
+<body>
+
+	<div class="container">
+		<form method="post" action="checklist">
+			<div class="panel panel-primary checklist_1">
+		  	<div class="panel-heading">
+		    	<h3 class="panel-title">Add A Checklist !</h3>
+		  	</div>
+		  	<div class="panel-body">
+		  		<div class="control-group">
+						<label for="select-regions">Regions:</label>
+						<select id="select-regions" placeholder="Pick regions..." name="regions"></select>
+					</div>
+					<div class="control-group">
+						<label for="select-assets">Assets:</label>
+						<select id="select-assets" placeholder="Pick assets..." name="assets"></select>
+					</div>
+		  	</div>
+		  </div>
+		  <input class="btn btn-default" type="submit" value="Submit">
+	  </form>
+	</div>
+
+	<script>
+
+		
+
+	</script>
+
+	</body>
+</html>

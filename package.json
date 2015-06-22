@@ -17,7 +17,8 @@
     "forever": "*",
     "forever-monitor": "*",
     "ibmpush":"*",
-    "ibmbluemix":"*"
+    "ibmbluemix":"*",
+    "geojson-utils":"*"
   },
   "repository": {}
 }
