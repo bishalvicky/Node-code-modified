@@ -4,86 +4,265 @@
 
 <link rel="stylesheet" href="public/css/bootstrap.min.css">
 <link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
-<link rel="stylesheet" href="public/css/normalize.css">
-<link rel="stylesheet" href="public/css/stylesheet.css">
-<link rel="stylesheet" href="public/css/selectize.default.css">
+<link rel="stylesheet" href="public/css/base.css">
+<link rel="stylesheet" href="public/css/index.css">
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 
 <script src="public/js/jquery.js"></script>
 <script src="public/js/bootstrap.min.js"></script>
-<script src="public/js/selectize.js"></script>
+<script src="public/js/createChecklist.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<style type="text/css">
 
+</style>
 <script type="text/javascript">
 	$(document).ready(function(){
-		var options = <%- JSON.stringify(content) %>;
-		var regionsData = [];
-		var assetsData = [];
-		for (var i = 0; i < options.regions.length; i++){
-			regionsData.push({region: options.regions[i], description: options.regions[i]});
-		}
-		for (var j = 0; j < options.assets.length; j++){
-			assetsData.push({asset: options.assets[j], description: options.assets[j]});
-		}
+		var data = <%- content %>;
+		var checklists = data.checklists;
 
-		$('#select-regions').selectize({
-			maxItems: null,
-			valueField: 'region',
-			labelField: 'description',
-			searchField: 'region',
-			options: regionsData,
-			create: false
+		
+		console.log(checklists);
+		
+		var checklistsCopy = [];
+		var container = $('.container');
+
+		checklists.forEach(function(checklist, index){
+			var checklistDiv = $('<div/>')
+													.addClass('checklist')
+													.attr('id','checklist'+index)
+													.appendTo(container);
+
+			createChecklist(checklist, index, checklistDiv,'asset');
+			createChecklist(checklist, index, checklistDiv,'region');
 		});
 
-		$('#select-assets').selectize({
-			maxItems: null,
-			valueField: 'asset',
-			labelField: 'description',
-			searchField: 'asset',
-			options: assetsData,
-			create: false
+		function addItem(ul, checklist, item, string){
+
+			var li = $('<li/>')
+							.addClass('view')
+							.attr('id',item)
+							.attr('data-checklist', checklist)
+							.attr('data-type',string)
+							.appendTo(ul);
+
+			var div = $('<div/>')
+								.addClass('view')
+								.attr('data-type',string)
+								.appendTo(li);
+
+			var input = $('<input/>')
+									.addClass('toggle')
+									.attr('type','checkbox')
+									.attr('data-asset',item)
+									.attr('data-type',string)
+									.appendTo(div);
+
+			var label = $('<label/>')
+									.text(item)
+									.attr('data-type',string)
+									.appendTo(div);
+
+			$(".checklist"+checklist+" #new-todo").val("");
+		}
+
+
+		$(".asset").autocomplete({
+			source: data.assets,
+			select: function (a, b) {
+				var checklistNo = parseInt(this.dataset.checklist);
+        if (a.keyCode === 13){
+        	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
+        	update();
+        	checklists[checklistNo].assets.push(b.item.value);
+    		}
+    	}
+    });
+
+    $(".region").autocomplete({
+			source: data.regions,
+			select: function (a, b) {
+				var checklistNo = parseInt(this.dataset.checklist);
+        if (a.keyCode === 13){
+        	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
+        	update();
+        	checklists[checklistNo].regions.push(b.item.value);
+    		}
+    	}
+    });
+
+		$(".checklist,.cross").mouseover(function(){
+			var checklist = $(this).attr('id');
+			if (checklist){
+				$("#"+checklist+" .cross").css("display","block");
+			}
+		}).mouseleave(function(){
+			$(".cross").css("display","none");
+		});
+
+		function check(checklistNo,dataType){
+			var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+			
+			$(checklistSelector+ " .toggle").each(function(){
+				if($(this).is(":checked")) {
+					var parent = $(this).parent().parent();
+					parent.removeClass("view");
+					parent.addClass("completed");
+				}
+				else {
+					var parent = $(this).parent().parent();
+					parent.removeClass("completed");
+					parent.addClass("view");
+				}
+			});
+		};
+
+		function update(){
+			$(".toggle-all").change(function(){
+				
+				var checklistNo = parseInt($(this).attr('data-checklist'));
+				var dataType = $(this).attr('data-type')
+				var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+				
+				if(this.checked) {
+					
+					$(checklistSelector+ " .toggle").each(function(){
+						this.checked = true;
+						check(checklistNo,dataType);
+					});
+
+					checklistsCopy[checklistNo] = JSON.parse(JSON.stringify(checklists[checklistNo]));
+					checklists[checklistNo].assets=[];
+					checklists[checklistNo].regions=[];
+					console.log(checklists, checklistsCopy);
+				}
+				else {
+
+					$(checklistSelector+ " .toggle").each(function(){
+						this.checked = false;
+						check(checklistNo,dataType);
+					});
+
+					checklists[checklistNo] = JSON.parse(JSON.stringify(checklistsCopy[checklistNo]));
+					console.log(checklists, checklistsCopy);
+				}
+			});
+
+
+			$("#todo-list .toggle").change(function(){
+				var parent = $(this).parent().parent();
+				var checklistNo = parseInt(parent.attr('data-checklist'));
+				var dataType = $(this).attr('data-type')
+				var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+				
+				if($(this).is(":checked")) {
+
+					var checkAll = $(checklistSelector +" .toggle:checked").length == $(checklistSelector+" .toggle").length;
+					var toggleAll = $(checklistSelector +' .toggle-all[data-checklist="'+checklistNo+'"]');
+					if (checkAll)
+						toggleAll[0].checked = true;
+					
+					parent.removeClass("view");
+					parent.addClass("completed");
+
+					if (dataType === 'asset')
+						checklists[checklistNo].assets = checklists[checklistNo].assets.filter(function(elem){
+							return elem !== parent.attr('id');
+						});
+					else if (dataType === 'region')
+						checklists[checklistNo].regions = checklists[checklistNo].regions.filter(function(elem){
+							return elem !== parent.attr('id');
+						});
+
+					console.log(checklists);
+				}
+				else {
+					
+					var toggleAll = $(checklistSelector+ ' .toggle-all[data-checklist="'+checklistNo+'"]');
+					toggleAll[0].checked = false;
+					
+					parent.removeClass("completed");
+					parent.addClass("view");
+					
+					if (dataType === 'asset')
+						checklists[checklistNo].assets.push(parent.attr('id'));
+					else if (dataType === 'region')
+						checklists[checklistNo].regions.push(parent.attr('id'));
+
+					console.log(checklists);
+				}
+			});
+		};
+		update();
+
+		$(".cross").click(function(){
+			//var result = confirm("Do you want to delete the entire checklist?");
+			//console.log(result);
 		});
 		
-		$wrapper = $(".checklist_1");
-		var sendRegions = [];
-		var sendAssets = [];
-		$('select.selectized,input.selectized', $wrapper).each(function() {
-			var $input = $(this);
-			var update = function(e) { 
-				console.log(JSON.stringify($input.val()));
-			}
-			$(this).on('change', update);
-			update();
-		});
 	});
 </script>
 </head>
 <body>
-
 	<div class="container">
-		<form method="post" action="checklist">
-			<div class="panel panel-primary checklist_1">
-		  	<div class="panel-heading">
-		    	<h3 class="panel-title">Add A Checklist !</h3>
-		  	</div>
-		  	<div class="panel-body">
-		  		<div class="control-group">
-						<label for="select-regions">Regions:</label>
-						<select id="select-regions" placeholder="Pick regions..." name="regions"></select>
-					</div>
-					<div class="control-group">
-						<label for="select-assets">Assets:</label>
-						<select id="select-assets" placeholder="Pick assets..." name="assets"></select>
-					</div>
-		  	</div>
+		<div class="row">
+		  <div class="col-lg-12">
+		    <div class="input-group">
+		      <div class="input-group-btn">
+		        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search <span class="caret"></span></button>
+		        <ul class="dropdown-menu">
+		          <li><a href="#">Checklist</a></li>
+		          <li><a href="#">Region</a></li>
+		          <li><a href="#">Asset</a></li>
+		        </ul>
+		      </div>
+		      <input type="text" class="form-control" aria-label="...">
+		    </div>
 		  </div>
-		  <input class="btn btn-default" type="submit" value="Submit">
-	  </form>
-	</div>
+	  </div>
+	  <!--ul class="nav nav-tabs checklists nav-justified">
+		</ul-->
 
-	<script>
+		<!--section id="todoapp">
+			<div class="cross" title="UPDATE">X</div>
+			<header id="header">
+				<h2 id="new-todo">Region I</h2>
+			</header>
+			<section id="main">
+				<input id="toggle-all" type="checkbox">
 
-		
-
-	</script>
-
-	</body>
+				<ul id="todo-list">
+					<li class="view">
+						<div class="view">
+							<input class="toggle" type="checkbox">
+							<label>asset_3</label>
+							
+						</div>
+						<input class="edit">
+					</li>
+					<li class=" completed">
+						<div class="view">
+							<input class="toggle" type="checkbox">
+							<label>asset_2</label>
+						</div>
+						<input class="edit">
+					</li>
+					
+					<li>
+						<div class="view">
+							<input class="toggle" type="checkbox">
+							<label>asset_1</label>
+							
+						</div>
+						<input class="edit">
+					</li>
+				</ul>
+			</section>
+			<footer id="footer">
+				<span id="todo-count">
+					1 item left
+				</span>
+			</footer>
+		</section-->
+  </div>
+</body>
 </html>
