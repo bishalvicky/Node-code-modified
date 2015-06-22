@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-
+var Q = require('q');
 
 router.use(function log(req, res, next){
   next();
@@ -28,21 +28,50 @@ router.post('/', function(req, res){
 		}
 
 		else{
-			console.log("Fetching trace");
+
+			var assetTrace = body.trace;
+			console.log("Fetching trace: "+ assetTrace);
+			var promises = [];
+			assetTrace.forEach(function(item, i){
+				var getGateway = assetTrace[i].gateway;
+				var deferred = Q.defer();
+				db.get(getGateway, function(err, gatebody){
+					
+					if(!err){
+						var coord = gatebody.coordinates;
+
+						var element = {
+									   "coordinates": coord,
+									   "timestamp": assetTrace[i].timestamp
+									  };
 
 
+						allTrace = allTrace.concat(element);
+						deferred.resolve(allTrace);
+						//console.log("during run: "+JSON.stringify(allTrace));
+					}
 
-			allTrace = allTrace.concat(body.trace);
+					else{
+						deferred.resolve(allTrace);
+					}
+				});
+				promises.push(deferred.promise);
+			});
 
-			console.log(allTrace);
+			Q.all(promises).then(function(data){
+				console.log("Promises: "+JSON.strigify(allTrace));
+				//console.log("data: "+data);
 
-			res.render('traceMap', {title:"Home page TW", content: allTrace});
+				var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
+
+				console.log("sorted: "+JSON.stringify(temper));
+
+				res.render('traceMap', {title: assetName, content: allTrace});
+			});
 
 		}
 
-
 	});
-
 
 });
 
