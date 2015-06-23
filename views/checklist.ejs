@@ -17,15 +17,57 @@
 </style>
 <script type="text/javascript">
 	$(document).ready(function(){
+		function post(path, params, method) {
+	    method = "post"; // Set method to post by default if not specified.
+
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+        if(params.hasOwnProperty(key)) {
+          var hiddenField = document.createElement("input");
+          hiddenField.setAttribute("type", "hidden");
+          hiddenField.setAttribute("name", "checklists["+key+"]");
+          hiddenField.setAttribute("value", JSON.stringify(params[key]));
+
+          form.appendChild(hiddenField);
+        }
+	    }
+
+	    document.body.appendChild(form);
+	    form.submit();
+		};
+
+		function get(path, method, key, value) {
+	    method = "get";
+
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+      var hiddenField = document.createElement("input");
+      hiddenField.setAttribute("type", "hidden");
+      hiddenField.setAttribute("name", key);
+      hiddenField.setAttribute("value", value);
+
+      form.appendChild(hiddenField);
+
+	    document.body.appendChild(form);
+	    form.submit();
+		};
+
 		var data = <%- content %>;
 		var checklists = data.checklists;
-
+		var trueAssets = data.trueAssets;
+		var trueRegions = data.trueRegions;
 		
 		console.log(checklists);
 		
 		var checklistsCopy = [];
 		var container = $('.container');
 
+		var trueChecklists = []
 		checklists.forEach(function(checklist, index){
 			var checklistDiv = $('<div/>')
 													.addClass('checklist')
@@ -34,8 +76,69 @@
 
 			createChecklist(checklist, index, checklistDiv,'asset');
 			createChecklist(checklist, index, checklistDiv,'region');
+			trueChecklists.push("checklist_"+index);
 		});
 
+
+		var formKey = "alll";
+
+		function populateSearch(value){
+			switch(value){
+				case "asset":
+					console.log("asset");
+					console.log(trueAssets);
+					$(".search").autocomplete({
+						source: trueAssets
+			    });
+			    formKey = "asset";
+			    break;
+
+			  case "region":
+			  	$(".search").autocomplete({
+						source: trueRegions
+			    });
+			    formKey = "region";
+			    break;
+
+			  case "checklist":
+			  	$(".search").autocomplete({
+						source: trueChecklists
+			    });
+			    formKey = "checklist";
+			    break;
+
+			  default:
+			  	formKey = "alll";
+			  	break;
+			}
+		}
+
+		populateSearch($(".search_select").val());
+		$(".search_select").change(function(){
+			var value = $(this).val();
+			populateSearch(value);
+		});
+		
+		$(".submit").click(function(){
+			var getValue = $(".search").val();
+			console.log(formKey);
+			console.log(getValue);
+			get('/checklist',"get",formKey,getValue);
+
+		});
+
+		if (checklists.length == 1){
+			$(".checklist").css({
+				"margin-left":"auto",
+				"margin-right":"auto"
+			});
+		}
+		else {
+			$(".checklist").css({
+				"float":"left",
+				"margin-left":"5%"
+			});
+		}
 		function addItem(ul, checklist, item, string){
 
 			var li = $('<li/>')
@@ -63,7 +166,9 @@
 									.appendTo(div);
 
 			$(".checklist"+checklist+" #new-todo").val("");
-		}
+		};
+
+		
 
 
 		$(".asset").autocomplete({
@@ -90,14 +195,14 @@
     	}
     });
 
-		$(".checklist,.cross").mouseover(function(){
+		/*$(".checklist,.cross").mouseover(function(){
 			var checklist = $(this).attr('id');
 			if (checklist){
 				$("#"+checklist+" .cross").css("display","block");
 			}
 		}).mouseleave(function(){
 			$(".cross").css("display","none");
-		});
+		});*/
 
 		function check(checklistNo,dataType){
 			var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
@@ -134,6 +239,7 @@
 					checklists[checklistNo].assets=[];
 					checklists[checklistNo].regions=[];
 					console.log(checklists, checklistsCopy);
+					data.assets = data.assets.concat(checklistsCopy[checklistNo].assets);
 				}
 				else {
 
@@ -142,9 +248,18 @@
 						check(checklistNo,dataType);
 					});
 
+					data.assets = data.assets.forEach(function(el){
+						return checklistsCopy[checklistNo].assets.indexOf(el) < 0;
+					});
+
 					checklists[checklistNo] = JSON.parse(JSON.stringify(checklistsCopy[checklistNo]));
 					console.log(checklists, checklistsCopy);
 				}
+
+				$(".asset").autocomplete({
+					source: data.assets
+				});
+
 			});
 
 
@@ -164,10 +279,12 @@
 					parent.removeClass("view");
 					parent.addClass("completed");
 
-					if (dataType === 'asset')
+					if (dataType === 'asset'){
 						checklists[checklistNo].assets = checklists[checklistNo].assets.filter(function(elem){
 							return elem !== parent.attr('id');
 						});
+						data.assets.push(parent.attr('id'));
+					}
 					else if (dataType === 'region')
 						checklists[checklistNo].regions = checklists[checklistNo].regions.filter(function(elem){
 							return elem !== parent.attr('id');
@@ -183,20 +300,28 @@
 					parent.removeClass("completed");
 					parent.addClass("view");
 					
-					if (dataType === 'asset')
+					if (dataType === 'asset'){
 						checklists[checklistNo].assets.push(parent.attr('id'));
+						data.assets = data.assets.filter(function(el){
+							return el!== parent.attr('id');
+						});
+					}
 					else if (dataType === 'region')
 						checklists[checklistNo].regions.push(parent.attr('id'));
 
 					console.log(checklists);
 				}
+				$(".asset").autocomplete({
+					source: data.assets
+				});
 			});
 		};
 		update();
 
-		$(".cross").click(function(){
+		$(".refresh").click(function(){
 			//var result = confirm("Do you want to delete the entire checklist?");
 			//console.log(result);
+			post('/checklist',checklists);
 		});
 		
 	});
@@ -205,64 +330,25 @@
 <body>
 	<div class="container">
 		<div class="row">
-		  <div class="col-lg-12">
-		    <div class="input-group">
-		      <div class="input-group-btn">
-		        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Search <span class="caret"></span></button>
-		        <ul class="dropdown-menu">
-		          <li><a href="#">Checklist</a></li>
-		          <li><a href="#">Region</a></li>
-		          <li><a href="#">Asset</a></li>
-		        </ul>
-		      </div>
-		      <input type="text" class="form-control" aria-label="...">
+		  <div class="col-lg-10">
+		  <form class="form-inline">
+		    <div class="form-group" style="width:100%;">
+		      <select class="form-control search_select" style="width:15%;">
+		      	<option value="alll">Checklists</option>
+					  <option value="checklist">Checklist</option>
+					  <option value="region">Region</option>
+					  <option value="asset">Asset</option>
+					</select>
+		      <input type="text" class="form-control search" aria-label="..." style="width:84%;">
 		    </div>
+		    </form>
 		  </div>
+		  <button type="button" class="btn btn-default submit">Submit</button>
+		  <button type="button" class="btn btn-default refresh">Refresh</button>
 	  </div>
-	  <!--ul class="nav nav-tabs checklists nav-justified">
-		</ul-->
-
-		<!--section id="todoapp">
-			<div class="cross" title="UPDATE">X</div>
-			<header id="header">
-				<h2 id="new-todo">Region I</h2>
-			</header>
-			<section id="main">
-				<input id="toggle-all" type="checkbox">
-
-				<ul id="todo-list">
-					<li class="view">
-						<div class="view">
-							<input class="toggle" type="checkbox">
-							<label>asset_3</label>
-							
-						</div>
-						<input class="edit">
-					</li>
-					<li class=" completed">
-						<div class="view">
-							<input class="toggle" type="checkbox">
-							<label>asset_2</label>
-						</div>
-						<input class="edit">
-					</li>
-					
-					<li>
-						<div class="view">
-							<input class="toggle" type="checkbox">
-							<label>asset_1</label>
-							
-						</div>
-						<input class="edit">
-					</li>
-				</ul>
-			</section>
-			<footer id="footer">
-				<span id="todo-count">
-					1 item left
-				</span>
-			</footer>
-		</section-->
+	  
+	  <div style="clear:both;"></div>
   </div>
+  
 </body>
 </html>

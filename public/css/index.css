@@ -24,7 +24,7 @@ button {
 body {
 	font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
 	line-height: 1.4em;
-	background: #f5f5f5;
+	background: #34495E none repeat scroll 0% 0%;
 	color: #4d4d4d;
 	-webkit-font-smoothing: antialiased;
 	-moz-font-smoothing: antialiased;
@@ -41,13 +41,11 @@ input[type="checkbox"] {
 	display: none;
 }
 .checklist{
-	margin-left: 10%;
-	margin-top: 5%;
+	margin-top: 7%;
 	width: 300px;
-	float: left;
 }
 #todoapp {
-	margin-bottom: 4%;
+	margin-bottom: 5%;
 	width: 100%;
 	border-radius: 5px;
 	background: #fff;
@@ -76,15 +74,16 @@ input[type="checkbox"] {
 
 #todoapp h1 {
 	position: absolute;
-	top: -155px;
+	top: -100px;
 	width: 100%;
-	font-size: 100px;
+	font-size: 65px;
 	font-weight: 100;
 	text-align: center;
 	color: rgba(175, 47, 47, 0.15);
 	-webkit-text-rendering: optimizeLegibility;
 	-moz-text-rendering: optimizeLegibility;
 	text-rendering: optimizeLegibility;
+	color: #FFF;
 }
 #todoapp .cross{
 	position: absolute;

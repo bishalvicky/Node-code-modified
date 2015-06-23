@@ -11,6 +11,16 @@ router.use(function log(req, res, next){
 
 var checklistsUsername;
 var checklists;
+
+Array.prototype.getUnique = function() {
+    var o = {}, a = [];
+    for (var i = 0; i < this.length; i++) 
+    	o[this[i]] = 1;
+    for (var e in o) 
+    	a.push(e);
+    return a;
+}
+
 function getChecklists(checklistIndex, region, asset){
 	
 	var deferred = Q.defer();
@@ -55,6 +65,8 @@ router.get('/', function(req, res){
 
 	var deferredData = Q.defer();
 	db.get("data", function(err, body){
+		trueAssets = body.assets.slice();
+		trueRegions = body.regions.slice();
 		regions = body.regions;
 		assets = body.assets;
 		deferredData.resolve(true);
@@ -63,7 +75,19 @@ router.get('/', function(req, res){
 
 	var deferredUser = Q.defer();
 
-	getChecklists(false, false, false).then(function(data){
+	var arg1 = false;
+	var arg2 = false;
+	var arg3 = false;
+		
+	if (req.query.checklist)
+		arg1 = parseInt(req.query.checklist.split('_')[1]);
+	else if (req.query.region)
+		arg2 = req.query.region;
+	else if (req.query.asset){
+		arg3 = req.query.asset;
+	}
+
+	getChecklists(arg1, arg2, arg3).then(function(data){
 		checklists = data;
 		deferredUser.resolve(true);
 	});
@@ -84,6 +108,8 @@ router.get('/', function(req, res){
 		var data = {
 			"regions": regions,
 			"assets": assets,
+			"trueAssets": trueAssets,
+			"trueRegions": trueRegions,
 			"checklists": checklists
 		};
 
@@ -95,33 +121,38 @@ router.post('/', function(req, res){
 	var data = req.body.data;
 
 	var promises = [];
-	if (typeof data.regions === 'string'){
-		data.regions = [data.regions];
-	}
 
-	if (typeof data.assets === 'string'){
-		data.assets = [data.assets];
-	}
+	data.checklists.forEach(function(item, index){
+		data.checklists[index] = JSON.parse(item);
+		data.checklists[index].regions = data.checklists[index].regions.getUnique();
+	});
+
+	data.checklists = data.checklists.filter(function(el){
+		return (el.assets.length!==0 && el.regions.length!==0);
+	});
+
+	checklists = data.checklists;
 
 	var deferredData = Q.defer();
 	db.get("data", function(err, body){
+		trueAssets = body.assets.splice();
+		trueRegions = body.regions.splice();
 		regions = body.regions;
 		assets = body.assets;
 		deferredData.resolve(true);
 	});
+
 	promises.push(deferredData.promise);
 
 	var deferredUser = Q.defer();
 	db.get(username, function(err, body){
 		rev = body._rev;
-		checklists = body.checklists;
 		deferredUser.resolve(true);
 	});
 
 	promises.push(deferredUser.promise);
 
 	Q.all(promises).then(function(d){
-		checklists.push(data);
 		var json = {
 			"_rev": rev,
 			"password": password,
@@ -145,9 +176,12 @@ router.post('/', function(req, res){
 
 			var data = {
 				"regions": regions,
-				"assets": assets
+				"assets": assets,
+				"trueAssets": trueAssets,
+				"trueRegions": trueRegions,
+				"checklists": checklists
 			};
-			console.log("Here");
+
 			res.send(data);
 		});
 	});

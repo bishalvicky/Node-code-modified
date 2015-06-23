@@ -25,7 +25,20 @@ router.get('/', function(req, res){
 		});
 
 	});*/
-	request('http://localhost:6001/checklistEndPoint', function(error, response, html){
+	console.log(req.query);
+	var url = 'http://localhost:6001/checklistEndPoint';
+	
+	if (req.query.alll)
+		url = url + '?alll=' + req.query.alll;
+	else if (req.query.checklist)
+		url = url + '?checklist=' + req.query.checklist;
+	else if (req.query.region)
+		url = url + '?region=' + req.query.region;
+	else if (req.query.asset)
+		url = url + '?asset=' + req.query.asset;
+
+	request(url, function(error, response, html){
+
 		res.render('checklist',{
 			title: "Checklist",
 			content: response.body
@@ -38,6 +51,17 @@ router.get('/', function(req, res){
 });
 
 router.post('/', function(req, res){
+	var options = {
+		url:'http://localhost:6001/checklistEndPoint', 
+		form: {data:req.body}
+	};
+
+	request.post(options, function(request, response){
+		res.render('checklist',{
+			title: "Checklist",
+			content: response.body
+		});
+	});
 });
 
 module.exports = router;

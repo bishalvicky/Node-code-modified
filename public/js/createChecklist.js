@@ -1,21 +1,3 @@
-/*checklists.forEach(function(checklist, index){
-			var li = $('<li/>')
-        .addClass('checklist_'+index)
-        .attr('role', 'presentation')
-        .appendTo(ulChecklists);
-
-      var aaa = $('<a/>')
-        .text('Checklist '+index)
-        .appendTo(li);
-		});
-		
-		$(".checklists li:first-child").addClass("active");
-
-		$(".checklists li").click(function(){
-			$(".checklists li").removeClass("active");
-			$(this).addClass("active");
-		});
-		*/
 function createChecklist(checklist, index, container,string){
 	var section = $('<section/>')
 										.attr('id','todoapp')
@@ -23,24 +5,21 @@ function createChecklist(checklist, index, container,string){
 										.attr('data-type',string)
 										.appendTo(container);
 
-	if(string === 'asset')
-		var cross = $('<div/>')
-								.addClass('cross')
-								.attr('title','UPDATE')
-								.text('X')
-								.attr('data-checklist',index)
-								.appendTo(section);
-
 	var header = $('<header/>')
 							.attr('id','header')
 							.attr('data-type',string)
 							.appendTo(section);
 
+	if (string === 'asset')
+		var headerh1 = $('<h1/>')
+									.text("checklist"+index)
+									.appendTo(header);
+
 	var headerh2 = $('<input/>')
 								.attr('id','new-todo')
 								.addClass('new-todo')
 								.addClass(string)
-								.attr("placeholder","Assets")
+								.attr("placeholder",string+"s")
 								.attr('data-checklist',index)
 								.attr('data-type',string)
 								.appendTo(header);
