@@ -36,6 +36,8 @@ var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
+var addChecklist = require('./routes/addChecklist');
+var checklistEndPoint = require('./routes/checklistEndPoint');
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
@@ -53,6 +55,8 @@ app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
+app.use('/addChecklist', addChecklist);
+app.use('/checklistEndPoint',checklistEndPoint);
 
 function initDBConnection() {
 
