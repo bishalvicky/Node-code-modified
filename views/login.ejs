@@ -1,0 +1,61 @@
+<html>
+<head>
+<title>Login</title>
+	<link rel="stylesheet" href="public/css/bootstrap.min.css">
+	<link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
+
+	<script src="public/js/jquery.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$(".submit").click(function(e){
+			e.preventDefault();
+			var password = $("#password").val();
+			var confirm_password = $("#confirm_password").val();
+			if (password.length!== 0)
+				if (password === confirm_password)
+					$(".register").submit();
+				else
+					$("#error_msg").html("<span style='color:red;'>Password mismatch!!</span>");
+		});
+		$(".check").click(function(){
+			$.ajax({
+	      url: 'register/check',
+	      type: 'post',
+	      data: {"username" : $("#username").val()},
+	      success: function( data, textStatus, jQxhr ){
+	        console.log(data);
+	        if(!data){
+	        	$("#error_msg").html("<span style='color:red;'>Username already exists!!</span>");
+	        }
+	        else{
+	        	$("#error_msg").html("<span style='color:green;'>This username is available.</span>");
+	        }
+	        	
+	      },
+	      error: function( jqXhr, textStatus, errorThrown ){
+	        console.log( errorThrown );
+	      }
+	    });
+		});
+	});
+		
+	</script>
+</head>
+<body>
+	<div class="container">
+		<form class="register" action="register" method="post">
+		  <div class="form-group">
+		    <label for="username">Username</label>
+		    <input type="text" class="form-control" name="username" id="username" placeholder="Username">
+		  </div>
+		  <div class="form-group" id = "error_msg" >
+		  </div>
+		  <div class="form-group">
+		    <label for="exampleInputPassword1">Password</label>
+		    <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+		  </div>
+		  <button type="submit" class="btn btn-default submit">Login</button>
+		</form>
+	</div>
+</body>
+</html>

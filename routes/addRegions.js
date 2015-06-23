@@ -14,14 +14,14 @@ router.post('/', function(req, res){
 	//var latitude = req.body.latitude;
 	//var longitude = req.body.longitude;
 	//var altitude = req.body.altitude;
-  res.send("Got a POST request!");
+  //res.send("Got a POST request!");
 
 
-  console.log(req.body);
+  console.log("android APPPP: "+JSON.stringify(req.body));
 
-  enterRegionsIntoData(req.body);
+  //enterRegionsIntoData(req.body);
 
-  createRegionDoc(req.body);
+  //createRegionDoc(req.body);
   
 
 });
