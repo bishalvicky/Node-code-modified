@@ -37,7 +37,7 @@ var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
 
-var login = require('./routes/login');
+var register = require('./routes/register');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
@@ -59,7 +59,7 @@ app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
-app.use('/login',login);
+app.use('/register',register);
 app.use('/addChecklist', addChecklist);
 app.use('/checklistEndPoint',checklistEndPoint);
 
