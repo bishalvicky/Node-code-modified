@@ -19,9 +19,9 @@ router.post('/', function(req, res){
 
   console.log("android APPPP: "+req.body);
 
-  enterRegionsIntoData(req.body);
+  //enterRegionsIntoData(req.body);
 
-  createRegionDoc(req.body);
+  //createRegionDoc(req.body);
   
 
 });
