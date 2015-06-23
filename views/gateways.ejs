@@ -1,0 +1,33 @@
+<html>
+	<head>
+		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				var gateway = 1;
+				var form = $(".gateway_form");
+				$("#add_gateway").click(function(){
+					gateway++;
+					var input = document.createElement("input");
+                	input.type = "text";
+                	input.name = "gateways[" + gateway+"]";
+                	input.placeholder = "Gateway "+gateway;
+					//var html = 'Gateway '+gateway+'<input name="gateways['+gateway+']" type="text"'>;
+					form.append(input);
+					form.append(document.createElement("br"));
+					form.append(document.createElement("br"));
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<form action="http://localhost:6002/addGateways" method="post" class="gateway_form">
+			<button type="button" id="add_gateway">Add Gateway</button>
+			<button type="submit">Submit</button>
+			<br>
+			<br>
+			<input name="gateways[1]" type="text"  placeholder="Gateway 1">
+			<br>
+			<br>
+		</form>
+	</body>
+</html>
