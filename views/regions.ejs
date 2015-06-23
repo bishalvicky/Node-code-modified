@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				var region = 1;
+				var gateways = 1;
+				var form = $(".region_form");
+				$("#add_region").click(function(){
+					region++;
+					gateways++;
+					var input = document.createElement("input");
+                	input.type = "text";
+                	input.name = "regions[" + region+"]";
+                	input.placeholder = "Region "+region;
+					form.append(input);
+
+					var inputgate = document.createElement("input");
+                	inputgate.type = "text";
+                	inputgate.name = "gateways[" + gateways+"]";
+                	inputgate.placeholder = "Gateways "+gateways;
+					form.append(inputgate);
+
+					form.append(document.createElement("br"));
+					form.append(document.createElement("br"));
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<form action="http://localhost:6002/addRegions" method="post" class="region_form">
+			<button type="button" id="add_region">Add Region</button>
+			<button type="submit">Submit</button>
+			<br>
+			<br>
+			<input name="regions[1]" type="text"  placeholder="Region 1">
+			<input name="gateways[1]" type="text"  placeholder="Gateways 1">
+			<br>
+			<br>
+		</form>
+	</body>
+</html>

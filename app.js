@@ -36,7 +36,12 @@ var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
+
 var login = require('./routes/login');
+
+var addChecklist = require('./routes/addChecklist');
+var checklistEndPoint = require('./routes/checklistEndPoint');
+
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
@@ -55,6 +60,9 @@ app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
 app.use('/login',login);
+app.use('/addChecklist', addChecklist);
+app.use('/checklistEndPoint',checklistEndPoint);
+
 
 function initDBConnection() {
 
@@ -580,7 +588,7 @@ function main(){
 	});
 };
 
-var debug = true;
+var debug = false;
 if (debug){
 	main();
 }

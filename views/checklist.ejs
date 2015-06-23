@@ -4,86 +4,351 @@
 
 <link rel="stylesheet" href="public/css/bootstrap.min.css">
 <link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
-<link rel="stylesheet" href="public/css/normalize.css">
-<link rel="stylesheet" href="public/css/stylesheet.css">
-<link rel="stylesheet" href="public/css/selectize.default.css">
+<link rel="stylesheet" href="public/css/base.css">
+<link rel="stylesheet" href="public/css/index.css">
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 
 <script src="public/js/jquery.js"></script>
 <script src="public/js/bootstrap.min.js"></script>
-<script src="public/js/selectize.js"></script>
+<script src="public/js/createChecklist.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<style type="text/css">
 
+</style>
 <script type="text/javascript">
 	$(document).ready(function(){
-		var options = <%- JSON.stringify(content) %>;
-		var regionsData = [];
-		var assetsData = [];
-		for (var i = 0; i < options.regions.length; i++){
-			regionsData.push({region: options.regions[i], description: options.regions[i]});
-		}
-		for (var j = 0; j < options.assets.length; j++){
-			assetsData.push({asset: options.assets[j], description: options.assets[j]});
-		}
+		function post(path, params, method) {
+	    method = "post"; // Set method to post by default if not specified.
 
-		$('#select-regions').selectize({
-			maxItems: null,
-			valueField: 'region',
-			labelField: 'description',
-			searchField: 'region',
-			options: regionsData,
-			create: false
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+        if(params.hasOwnProperty(key)) {
+          var hiddenField = document.createElement("input");
+          hiddenField.setAttribute("type", "hidden");
+          hiddenField.setAttribute("name", "checklists["+key+"]");
+          hiddenField.setAttribute("value", JSON.stringify(params[key]));
+
+          form.appendChild(hiddenField);
+        }
+	    }
+
+	    document.body.appendChild(form);
+	    form.submit();
+		};
+
+		function get(path, method, key, value) {
+	    method = "get";
+
+	    var form = document.createElement("form");
+	    form.setAttribute("method", method);
+	    form.setAttribute("action", path);
+
+      var hiddenField = document.createElement("input");
+      hiddenField.setAttribute("type", "hidden");
+      hiddenField.setAttribute("name", key);
+      hiddenField.setAttribute("value", value);
+
+      form.appendChild(hiddenField);
+
+	    document.body.appendChild(form);
+	    form.submit();
+		};
+
+		var data = <%- content %>;
+		var checklists = data.checklists;
+		var trueAssets = data.trueAssets;
+		var trueRegions = data.trueRegions;
+		
+		console.log(checklists);
+		
+		var checklistsCopy = [];
+		var container = $('.container');
+
+		var trueChecklists = []
+		checklists.forEach(function(checklist, index){
+			var checklistDiv = $('<div/>')
+													.addClass('checklist')
+													.attr('id','checklist'+index)
+													.appendTo(container);
+
+			createChecklist(checklist, index, checklistDiv,'asset');
+			createChecklist(checklist, index, checklistDiv,'region');
+			trueChecklists.push("checklist_"+index);
 		});
 
-		$('#select-assets').selectize({
-			maxItems: null,
-			valueField: 'asset',
-			labelField: 'description',
-			searchField: 'asset',
-			options: assetsData,
-			create: false
+
+		var formKey = "alll";
+
+		function populateSearch(value){
+			switch(value){
+				case "asset":
+					console.log("asset");
+					console.log(trueAssets);
+					$(".search").autocomplete({
+						source: trueAssets
+			    });
+			    formKey = "asset";
+			    break;
+
+			  case "region":
+			  	$(".search").autocomplete({
+						source: trueRegions
+			    });
+			    formKey = "region";
+			    break;
+
+			  case "checklist":
+			  	$(".search").autocomplete({
+						source: trueChecklists
+			    });
+			    formKey = "checklist";
+			    break;
+
+			  default:
+			  	formKey = "alll";
+			  	break;
+			}
+		}
+
+		populateSearch($(".search_select").val());
+		$(".search_select").change(function(){
+			var value = $(this).val();
+			populateSearch(value);
 		});
 		
-		$wrapper = $(".checklist_1");
-		var sendRegions = [];
-		var sendAssets = [];
-		$('select.selectized,input.selectized', $wrapper).each(function() {
-			var $input = $(this);
-			var update = function(e) { 
-				console.log(JSON.stringify($input.val()));
-			}
-			$(this).on('change', update);
-			update();
+		$(".submit").click(function(){
+			var getValue = $(".search").val();
+			console.log(formKey);
+			console.log(getValue);
+			get('/checklist',"get",formKey,getValue);
+
 		});
+
+		if (checklists.length == 1){
+			$(".checklist").css({
+				"margin-left":"auto",
+				"margin-right":"auto"
+			});
+		}
+		else {
+			$(".checklist").css({
+				"float":"left",
+				"margin-left":"5%"
+			});
+		}
+		function addItem(ul, checklist, item, string){
+
+			var li = $('<li/>')
+							.addClass('view')
+							.attr('id',item)
+							.attr('data-checklist', checklist)
+							.attr('data-type',string)
+							.appendTo(ul);
+
+			var div = $('<div/>')
+								.addClass('view')
+								.attr('data-type',string)
+								.appendTo(li);
+
+			var input = $('<input/>')
+									.addClass('toggle')
+									.attr('type','checkbox')
+									.attr('data-asset',item)
+									.attr('data-type',string)
+									.appendTo(div);
+
+			var label = $('<label/>')
+									.text(item)
+									.attr('data-type',string)
+									.appendTo(div);
+
+			$(".checklist"+checklist+" #new-todo").val("");
+		};
+
+		
+
+
+		$(".asset").autocomplete({
+			source: data.assets,
+			select: function (a, b) {
+				var checklistNo = parseInt(this.dataset.checklist);
+        if (a.keyCode === 13){
+        	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
+        	update();
+        	checklists[checklistNo].assets.push(b.item.value);
+    		}
+    	}
+    });
+
+    $(".region").autocomplete({
+			source: data.regions,
+			select: function (a, b) {
+				var checklistNo = parseInt(this.dataset.checklist);
+        if (a.keyCode === 13){
+        	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
+        	update();
+        	checklists[checklistNo].regions.push(b.item.value);
+    		}
+    	}
+    });
+
+		/*$(".checklist,.cross").mouseover(function(){
+			var checklist = $(this).attr('id');
+			if (checklist){
+				$("#"+checklist+" .cross").css("display","block");
+			}
+		}).mouseleave(function(){
+			$(".cross").css("display","none");
+		});*/
+
+		function check(checklistNo,dataType){
+			var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+			
+			$(checklistSelector+ " .toggle").each(function(){
+				if($(this).is(":checked")) {
+					var parent = $(this).parent().parent();
+					parent.removeClass("view");
+					parent.addClass("completed");
+				}
+				else {
+					var parent = $(this).parent().parent();
+					parent.removeClass("completed");
+					parent.addClass("view");
+				}
+			});
+		};
+
+		function update(){
+			$(".toggle-all").change(function(){
+				
+				var checklistNo = parseInt($(this).attr('data-checklist'));
+				var dataType = $(this).attr('data-type')
+				var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+				
+				if(this.checked) {
+					
+					$(checklistSelector+ " .toggle").each(function(){
+						this.checked = true;
+						check(checklistNo,dataType);
+					});
+
+					checklistsCopy[checklistNo] = JSON.parse(JSON.stringify(checklists[checklistNo]));
+					checklists[checklistNo].assets=[];
+					checklists[checklistNo].regions=[];
+					console.log(checklists, checklistsCopy);
+					data.assets = data.assets.concat(checklistsCopy[checklistNo].assets);
+				}
+				else {
+
+					$(checklistSelector+ " .toggle").each(function(){
+						this.checked = false;
+						check(checklistNo,dataType);
+					});
+
+					data.assets = data.assets.forEach(function(el){
+						return checklistsCopy[checklistNo].assets.indexOf(el) < 0;
+					});
+
+					checklists[checklistNo] = JSON.parse(JSON.stringify(checklistsCopy[checklistNo]));
+					console.log(checklists, checklistsCopy);
+				}
+
+				$(".asset").autocomplete({
+					source: data.assets
+				});
+
+			});
+
+
+			$("#todo-list .toggle").change(function(){
+				var parent = $(this).parent().parent();
+				var checklistNo = parseInt(parent.attr('data-checklist'));
+				var dataType = $(this).attr('data-type')
+				var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+				
+				if($(this).is(":checked")) {
+
+					var checkAll = $(checklistSelector +" .toggle:checked").length == $(checklistSelector+" .toggle").length;
+					var toggleAll = $(checklistSelector +' .toggle-all[data-checklist="'+checklistNo+'"]');
+					if (checkAll)
+						toggleAll[0].checked = true;
+					
+					parent.removeClass("view");
+					parent.addClass("completed");
+
+					if (dataType === 'asset'){
+						checklists[checklistNo].assets = checklists[checklistNo].assets.filter(function(elem){
+							return elem !== parent.attr('id');
+						});
+						data.assets.push(parent.attr('id'));
+					}
+					else if (dataType === 'region')
+						checklists[checklistNo].regions = checklists[checklistNo].regions.filter(function(elem){
+							return elem !== parent.attr('id');
+						});
+
+					console.log(checklists);
+				}
+				else {
+					
+					var toggleAll = $(checklistSelector+ ' .toggle-all[data-checklist="'+checklistNo+'"]');
+					toggleAll[0].checked = false;
+					
+					parent.removeClass("completed");
+					parent.addClass("view");
+					
+					if (dataType === 'asset'){
+						checklists[checklistNo].assets.push(parent.attr('id'));
+						data.assets = data.assets.filter(function(el){
+							return el!== parent.attr('id');
+						});
+					}
+					else if (dataType === 'region')
+						checklists[checklistNo].regions.push(parent.attr('id'));
+
+					console.log(checklists);
+				}
+				$(".asset").autocomplete({
+					source: data.assets
+				});
+			});
+		};
+		update();
+
+		$(".refresh").click(function(){
+			//var result = confirm("Do you want to delete the entire checklist?");
+			//console.log(result);
+			post('/checklist',checklists);
+		});
+		
 	});
 </script>
 </head>
 <body>
-
 	<div class="container">
-		<form method="post" action="checklist">
-			<div class="panel panel-primary checklist_1">
-		  	<div class="panel-heading">
-		    	<h3 class="panel-title">Add A Checklist !</h3>
-		  	</div>
-		  	<div class="panel-body">
-		  		<div class="control-group">
-						<label for="select-regions">Regions:</label>
-						<select id="select-regions" placeholder="Pick regions..." name="regions"></select>
-					</div>
-					<div class="control-group">
-						<label for="select-assets">Assets:</label>
-						<select id="select-assets" placeholder="Pick assets..." name="assets"></select>
-					</div>
-		  	</div>
+		<div class="row">
+		  <div class="col-lg-10">
+		  <form class="form-inline">
+		    <div class="form-group" style="width:100%;">
+		      <select class="form-control search_select" style="width:15%;">
+		      	<option value="alll">Checklists</option>
+					  <option value="checklist">Checklist</option>
+					  <option value="region">Region</option>
+					  <option value="asset">Asset</option>
+					</select>
+		      <input type="text" class="form-control search" aria-label="..." style="width:84%;">
+		    </div>
+		    </form>
 		  </div>
-		  <input class="btn btn-default" type="submit" value="Submit">
-	  </form>
-	</div>
-
-	<script>
-
-		
-
-	</script>
-
-	</body>
+		  <button type="button" class="btn btn-default submit">Submit</button>
+		  <button type="button" class="btn btn-default refresh">Refresh</button>
+	  </div>
+	  
+	  <div style="clear:both;"></div>
+  </div>
+  
+</body>
 </html>

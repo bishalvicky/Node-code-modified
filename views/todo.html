@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="base.css">
+	<link rel="stylesheet" href="index.css">
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$("#todoapp,.cross").mouseover(function(){
+			$(".cross").css("display","block");
+		});
+		
+		$("#todoapp,.cross").mouseleave(function(){
+			$(".cross").css("display","none");
+		});
+
+		function check(){
+			$("#todo-list .toggle").each(function(){
+				if($(this).is(":checked")) {
+					var parent = $(this).parent().parent();
+					parent.removeClass("view");
+					parent.addClass("completed");
+				}
+				else {
+					var parent = $(this).parent().parent();
+					parent.removeClass("completed");
+					parent.addClass("view");
+				}
+			});
+		};
+		check();
+		
+		$("#toggle-all").change(function(){
+			if(this.checked) {
+				$("#todo-list .toggle").each(function(){
+					this.checked = true;
+					check();
+				});
+			}
+			else {
+				$("#todo-list .toggle").each(function(){
+					this.checked = false;
+					check();
+				});
+			}
+		});
+
+		//TODO Check the toglle-all if all checkboxes are checked
+
+
+		$("#todo-list .toggle").change(function(){
+			if($(this).is(":checked")) {
+				var parent = $(this).parent().parent();
+				parent.removeClass("view");
+				parent.addClass("completed");
+			}
+			else {
+				$("#toggle-all").attr("checked",false);
+				var parent = $(this).parent().parent();
+				parent.removeClass("completed");
+				parent.addClass("view");	
+			}
+		});
+		$(".cross").click(function(){
+			var result = confirm("Do you want to delete the entire region?");
+			console.log(result);
+		});
+	});
+	</script>
+</head>
+<body>
+	<section id="todoapp">
+		<div class="cross" title="UPDATE">X</div>
+		<header id="header">
+			<!--h1>Checklists</h1-->
+			<h2 id="new-todo">Region I</h2>
+		</header>
+		<section id="main">
+			<input id="toggle-all" type="checkbox">
+
+			<ul id="todo-list">
+				<li class=" completed">
+					<div class="view">
+						<input class="toggle" type="checkbox">
+						<label>asset_2</label>
+					</div>
+					<input class="edit">
+				</li>
+				<li class="view">
+					<div class="view">
+						<input class="toggle" type="checkbox">
+						<label>asset_3</label>
+						
+					</div>
+					<input class="edit">
+				</li>
+				<li>
+					<div class="view">
+						<input class="toggle" type="checkbox">
+						<label>asset_1</label>
+						
+					</div>
+					<input class="edit">
+				</li>
+			</ul>
+		</section>
+		<footer id="footer">
+			<span id="todo-count">
+				1 item left
+			</span>
+		</footer>
+	</section>
+	
+</body>
+</html>
