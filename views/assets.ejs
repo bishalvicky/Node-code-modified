@@ -1,0 +1,43 @@
+<html>
+	<head>
+		<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				var asset = 1;
+				var type = 1;
+				var form = $(".asset_form");
+				$("#add_asset").click(function(){
+					asset++;
+					type++;
+
+					var input = document.createElement("input");
+                	input.type = "text";
+                	input.name = "assets[" + asset+"]";
+                	input.placeholder = "Asset "+asset;
+					form.append(input);
+
+					var typeinput = document.createElement("input");
+                	typeinput.type = "text";
+                	typeinput.name = "type[" + type+"]";
+                	typeinput.placeholder = "type "+type;
+					form.append(typeinput);
+
+					form.append(document.createElement("br"));
+					form.append(document.createElement("br"));
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<form action="http://localhost:6002/addAssets" method="post" class="asset_form">
+			<button type="button" id="add_asset">Add Asset</button>
+			<button type="submit">Submit</button>
+			<br>
+			<br>
+			<input name="assets[1]" type="text"  placeholder="Asset 1">
+			<input name="type[1]" type="text"  placeholder="type 1">			
+			<br>
+			<br>
+		</form>
+	</body>
+</html>
