@@ -17,7 +17,7 @@ router.post('/', function(req, res){
   //res.send("Got a POST request!");
 
 
-  console.log("android APPPP: "+req.body);
+  console.log("android APPPP: "+JSON.stringify(req.body));
 
   //enterRegionsIntoData(req.body);
 
