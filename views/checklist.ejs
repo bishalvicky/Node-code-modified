@@ -6,12 +6,12 @@
 <link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
 <link rel="stylesheet" href="public/css/base.css">
 <link rel="stylesheet" href="public/css/index.css">
-<link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" href="public/css/jquery-ui.css">
 
 <script src="public/js/jquery.js"></script>
 <script src="public/js/bootstrap.min.js"></script>
 <script src="public/js/createChecklist.js"></script>
-  <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+  <script src="public/js/jquery-ui.js"></script>
 <style type="text/css">
 
 </style>
@@ -126,6 +126,7 @@
 			get('/checklist',"get",formKey,getValue);
 
 		});
+
 
 		if (checklists.length == 1){
 			$(".checklist").css({
@@ -345,6 +346,9 @@
 		  </div>
 		  <button type="button" class="btn btn-default submit">Submit</button>
 		  <button type="button" class="btn btn-default refresh">Refresh</button>
+		  <form action="logout" method = "get">
+			    <input type="submit" class="btn btn-default logout" value="Logout">
+			</form>
 	  </div>
 	  
 	  <div style="clear:both;"></div>

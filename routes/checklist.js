@@ -7,9 +7,11 @@ router.use(function log(req, res, next){
   next();
 });
 
+
+
 var username = "skjindal93";
 var password = "hehe";
-
+//var session_data;
 
 //Arguments:
 //1. checklistIndex as of now
@@ -25,25 +27,32 @@ router.get('/', function(req, res){
 		});
 
 	});*/
-	console.log(req.query);
-	var url = 'http://localhost:6001/checklistEndPoint';
-	
-	if (req.query.alll)
-		url = url + '?alll=' + req.query.alll;
-	else if (req.query.checklist)
-		url = url + '?checklist=' + req.query.checklist;
-	else if (req.query.region)
-		url = url + '?region=' + req.query.region;
-	else if (req.query.asset)
-		url = url + '?asset=' + req.query.asset;
+	session_data = req.session;
+	if(session_data.username){
+		console.log(req.query);
+		var url = 'http://localhost:6001/checklistEndPoint';
+		
+		if (req.query.alll)
+			url = url + '?alll=' + req.query.alll;
+		else if (req.query.checklist)
+			url = url + '?checklist=' + req.query.checklist;
+		else if (req.query.region)
+			url = url + '?region=' + req.query.region;
+		else if (req.query.asset)
+			url = url + '?asset=' + req.query.asset;
 
-	request(url, function(error, response, html){
+		request(url, function(error, response, html){
 
-		res.render('checklist',{
-			title: "Checklist",
-			content: response.body
+			res.render('checklist',{
+				title: "Checklist",
+				content: response.body,
+				username: session_data.username
+			});
 		});
-	});
+	}
+	else
+		res.redirect('login');
+	
 	/*res.render('checklist',{
 		title: "Checklist",
 		content: {"hello":"hello"}

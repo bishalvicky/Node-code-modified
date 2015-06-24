@@ -7,26 +7,42 @@ router.use(function log(req, res, next){
 });
 
 router.get('/', function(req, res){
-	res.render('register');
+	session_data = req.session;
+	if(session_data.username){
+		res.redirect('checklist');
+	}
+	else
+		res.render('register');
+	
 });
 
 router.post('/', function(req, res){
+	var username = req.body.username;
 	if (req.body.password === req.body.confirm_password){
 		var user_json = {
 			"password": req.body.password,
 			"checklist": []
 		}
-		db.insert(user_json,req.body.username,function(err,body){
-			if(!err)
-				console.log("Inserted!!");
-		})
-		db.get("data",function(err,body){
+		
+		db.get("data", function(err,body){
 			if(!err){
-				body.users.push(req.body.username);
+				if(body.users.indexOf(username)<0){
+					body.users.push(username);
+					db.insert(body,"data",function(err,body){
+						console.log("Data Updated");
+						db.insert(user_json, username,function(err,body){
+							console.log("Inserted")
+						});
+					});
+				}
 			}
 		});
-		//res.render()
 
+		res.redirect('login');
+
+	}
+	else{
+		res.redirect('register');
 	}
 	
 
@@ -35,18 +51,14 @@ router.post('/', function(req, res){
 router.post('/check',function(req, res){
 	// console.log("HETE");
 	var username = req.body.username;
-	db.get(username, function(err,body){
-		if(err){
-			res.send(true);
-			console.log("1111");
+	db.get("data", function(err,body){
+		if(!err){
+			var users = body.users;
+			if(users.indexOf(username)<0)
+				res.send(true);
+			else
+				res.send(false);
 		}
-			
-		else{
-			res.send(false);
-			console.log("2222");
-		}
-		console.log(JSON.stringify(body));	
-
 	});
 });
 module.exports = router;

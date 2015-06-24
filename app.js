@@ -6,6 +6,7 @@ var request = require('request');
 var ibmbluemix = require('ibmbluemix');
 var ibmpush = require('ibmpush');
 var geojson = require('geojson-utils');
+var session = require('express-session');
 
 var user = "a-jq3b5v-nyywcig5q2";
 var pass = "vAlx3YAaFY2xJ!8*Gf";
@@ -15,6 +16,7 @@ var appConfig = {
     applicationRoute: "http://node-code.mybluemix.net",
     applicationSecret: "d59b875fbe53ed4340df9304747bf182d2bba0ea"
 };
+
 
 ibmbluemix.initialize(appConfig);
 //var logger = ibmbluemix.getLogger();
@@ -36,8 +38,10 @@ var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
+var logout = require('./routes/logout');
 
 var register = require('./routes/register');
+var login = require('./routes/login');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
@@ -51,6 +55,8 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
 
+
+app.use(session({secret: 'baaga'}));
 app.use(express.static(__dirname, 'public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
@@ -60,9 +66,21 @@ app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
 app.use('/register',register);
+app.use('/login',login);
 app.use('/addChecklist', addChecklist);
 app.use('/checklistEndPoint',checklistEndPoint);
+app.use('/logout',logout)
 
+var session_data;
+app.get('/',function(req,res){
+	session_data = req.session;
+	if(session_data.username){
+		res.redirect('checklist');
+	}
+	else
+		res.redirect('login');
+	
+});
 
 function initDBConnection() {
 
