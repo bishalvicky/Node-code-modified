@@ -18,35 +18,47 @@ var password = "hehe";
 //2. region name
 //3. asset name
 
+function getAssetLocation(asset){
+	var deferred = Q.defer();
+
+	db.get(asset, function(err, body){
+		var length = body.trace.length;
+		if (length !== 0)
+			deferred.resolve(body.trace[length - 1]);
+		else
+			deferred.resolve(false);
+	});
+
+	return deferred.promise;
+}
+
 router.get('/', function(req, res){
-	/*getChecklists(false, false, false).then(function(checklists){
-
-		res.render('checklist',{
-			title: "Checklist",
-			content: checklists
-		});
-
-	});*/
 	session_data = req.session;
 	if(session_data.username){
 		console.log(req.query);
 		var url = 'http://localhost:6001/checklistEndPoint';
-		
+		var trace = null;
+
 		if (req.query.alll)
 			url = url + '?alll=' + req.query.alll;
 		else if (req.query.checklist)
 			url = url + '?checklist=' + req.query.checklist;
 		else if (req.query.region)
 			url = url + '?region=' + req.query.region;
-		else if (req.query.asset)
-			url = url + '?asset=' + req.query.asset;
+		else if (req.query.asset){
+			url = url + '?asset=' + req.query.asset;	
+			getAssetLocation(req.query.asset).then(function(data){
+				trace = data;
+			});
+		}
 
 		request(url, function(error, response, html){
 
 			res.render('checklist',{
 				title: "Checklist",
 				content: response.body,
-				username: session_data.username
+				username: session_data.username,
+				trace: trace
 			});
 		});
 	}

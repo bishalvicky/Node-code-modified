@@ -70,7 +70,10 @@ router.get('/', function(req, res){
 		regions = body.regions;
 		assets = body.assets;
 		deferredData.resolve(true);
+		console.log(regions);
 	});
+	
+
 	promises.push(deferredData.promise);
 
 	var deferredUser = Q.defer();

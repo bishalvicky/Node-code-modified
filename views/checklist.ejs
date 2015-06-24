@@ -11,12 +11,75 @@
 <script src="public/js/jquery.js"></script>
 <script src="public/js/bootstrap.min.js"></script>
 <script src="public/js/createChecklist.js"></script>
-  <script src="public/js/jquery-ui.js"></script>
+<script src="public/js/jquery-ui.js"></script>
 <style type="text/css">
 
+.container{
+	width: 100%;
+	padding: 0px;
+}
+.bottom{
+	width: 100%;
+	height: 100%;
+	margin-top: 3%;
+}
+.search_select{
+	text-transform: uppercase;
+	height: 100%;
+	cursor: pointer;
+	font-size: 13px;
+	letter-spacing: 1px;	
+}
+.plusContainer{
+	margin-top: 3%;
+}
+.plus,.refresh{
+	margin: 0 auto;
+	color: black;
+	background-color: rgb(174, 174, 174);
+	width: 150px;
+	height: 150px;
+	text-align: center;
+	border-radius: 50%;
+	position: relative;
+	cursor: pointer;
+	-webkit-transition: background-color 250ms linear;
+  -moz-transition: background-color 250ms linear;
+  -o-transition: background-color 250ms linear;
+  -ms-transition: background-color 250ms linear;
+  transition: background-color 250ms linear;
+}
+
+.refresh{
+	margin-top: 10%;
+}
+.plus:hover,.refresh:hover{
+	background-color: black;
+	color: rgb(174, 174, 174);
+	-webkit-transition: background-color 250ms linear;
+  -moz-transition: background-color 250ms linear;
+  -o-transition: background-color 250ms linear;
+  -ms-transition: background-color 250ms linear;
+  transition: background-color 250ms linear;
+}
+.plus p, .refresh p{
+	font-size: 200px;
+  width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 40px;
+}
 </style>
 <script type="text/javascript">
 	$(document).ready(function(){
+		//Check if Safari
+		var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+		if (isSafari){
+			$(".refresh p").html("REFRESH");
+			$(".refresh p").css({"font-size":"25px","font-weight":"bold"});
+		}
+
+		//POST request function
 		function post(path, params, method) {
 	    method = "post"; // Set method to post by default if not specified.
 
@@ -39,6 +102,7 @@
 	    form.submit();
 		};
 
+		//GET request function
 		function get(path, method, key, value) {
 	    method = "get";
 
@@ -57,29 +121,32 @@
 	    form.submit();
 		};
 
+		//variables
 		var data = <%- content %>;
 		var checklists = data.checklists;
 		var trueAssets = data.trueAssets;
 		var trueRegions = data.trueRegions;
-		
+		var trueChecklists = []
+		var checklistsCopy = [];
+
 		console.log(checklists);
 		
-		var checklistsCopy = [];
 		var container = $('.container');
+		var plusContainer = $('.plusContainer');
 
-		var trueChecklists = []
+		//creating checklists
 		checklists.forEach(function(checklist, index){
 			var checklistDiv = $('<div/>')
 													.addClass('checklist')
 													.attr('id','checklist'+index)
-													.appendTo(container);
+													.insertBefore(plusContainer);
 
 			createChecklist(checklist, index, checklistDiv,'asset');
 			createChecklist(checklist, index, checklistDiv,'region');
 			trueChecklists.push("checklist_"+index);
 		});
 
-
+		//populating search text box on top
 		var formKey = "alll";
 
 		function populateSearch(value){
@@ -114,12 +181,15 @@
 		}
 
 		populateSearch($(".search_select").val());
+
 		$(".search_select").change(function(){
 			var value = $(this).val();
 			populateSearch(value);
 		});
 		
-		$(".submit").click(function(){
+		//Submitting the checklist
+		$(".submit").click(function(e){
+			e.preventDefault();
 			var getValue = $(".search").val();
 			console.log(formKey);
 			console.log(getValue);
@@ -127,19 +197,56 @@
 
 		});
 
+		//Logging out the user
+		$(".logout").click(function(e){
+			e.preventDefault();
+			get('/logout',"get",'','');
 
-		if (checklists.length == 1){
-			$(".checklist").css({
-				"margin-left":"auto",
-				"margin-right":"auto"
-			});
-		}
-		else {
-			$(".checklist").css({
-				"float":"left",
-				"margin-left":"5%"
-			});
-		}
+		});
+
+		//Adding checklist on add button
+		var clicks = checklists.length - 1;
+		$(".plus").click(function(){
+			clicks++;
+			var checklist = {
+				"assets": [],
+				"regions": []
+			}
+
+			var checklistDiv = $('<div/>')
+												.addClass('checklist')
+												.attr('id','checklist'+clicks)
+												.insertBefore(plusContainer);
+
+			createChecklist(checklist, clicks,checklistDiv,'asset');
+			createChecklist(checklist, clicks,checklistDiv,'region');
+			checklists.push(checklist);
+
+			autocomplete();
+			update();
+			cssFloat();
+		});
+
+
+		//If 1 checklist -> center, else float: left
+		function cssFloat(){
+			if (checklists.length <= 1){
+				$(".checklist").css({
+					"margin-left":"auto",
+					"margin-right":"auto"
+				});
+			}
+			else {
+				$(".checklist").css({
+					"float":"left",
+					"margin-left":"5%"
+				});
+			}
+
+		};
+		cssFloat();
+
+		//Add items to checklist
 		function addItem(ul, checklist, item, string){
 
 			var li = $('<li/>')
@@ -169,42 +276,37 @@
 			$(".checklist"+checklist+" #new-todo").val("");
 		};
 
-		
+		//Autocompleting assets and regions fields
+		function autocomplete(){
+			$(".asset").autocomplete({
+				source: data.assets,
+				select: function (a, b) {
+					var checklistNo = parseInt(this.dataset.checklist);
+		      if (a.keyCode === 13){
+		      	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
+		      	update();
+		      	checklists[checklistNo].assets.push(b.item.value);
 
+		  		}
+		  	}
+		  });
 
-		$(".asset").autocomplete({
-			source: data.assets,
-			select: function (a, b) {
-				var checklistNo = parseInt(this.dataset.checklist);
-        if (a.keyCode === 13){
-        	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
-        	update();
-        	checklists[checklistNo].assets.push(b.item.value);
-    		}
-    	}
-    });
+		  $(".region").autocomplete({
+				source: data.regions,
+				select: function (a, b) {
+					var checklistNo = parseInt(this.dataset.checklist);
+		      if (a.keyCode === 13){
+		      	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
+		      	update();
+		      	checklists[checklistNo].regions.push(b.item.value);
+		  		}
+		  	}
+		  });
+  	};
 
-    $(".region").autocomplete({
-			source: data.regions,
-			select: function (a, b) {
-				var checklistNo = parseInt(this.dataset.checklist);
-        if (a.keyCode === 13){
-        	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
-        	update();
-        	checklists[checklistNo].regions.push(b.item.value);
-    		}
-    	}
-    });
+  	autocomplete();
 
-		/*$(".checklist,.cross").mouseover(function(){
-			var checklist = $(this).attr('id');
-			if (checklist){
-				$("#"+checklist+" .cross").css("display","block");
-			}
-		}).mouseleave(function(){
-			$(".cross").css("display","none");
-		});*/
-
+  	//checkboxes
 		function check(checklistNo,dataType){
 			var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
 			
@@ -222,6 +324,7 @@
 			});
 		};
 
+		//checkboxes
 		function update(){
 			$(".toggle-all").change(function(){
 				
@@ -249,7 +352,7 @@
 						check(checklistNo,dataType);
 					});
 
-					data.assets = data.assets.forEach(function(el){
+					data.assets = data.assets.filter(function(el){
 						return checklistsCopy[checklistNo].assets.indexOf(el) < 0;
 					});
 
@@ -263,7 +366,7 @@
 
 			});
 
-
+			//checkboxes
 			$("#todo-list .toggle").change(function(){
 				var parent = $(this).parent().parent();
 				var checklistNo = parseInt(parent.attr('data-checklist'));
@@ -320,8 +423,6 @@
 		update();
 
 		$(".refresh").click(function(){
-			//var result = confirm("Do you want to delete the entire checklist?");
-			//console.log(result);
 			post('/checklist',checklists);
 		});
 		
@@ -330,7 +431,7 @@
 </head>
 <body>
 	<div class="container">
-		<div class="row">
+		<!--div class="row">
 		  <div class="col-lg-10">
 		  <form class="form-inline">
 		    <div class="form-group" style="width:100%;">
@@ -345,13 +446,33 @@
 		    </form>
 		  </div>
 		  <button type="button" class="btn btn-default submit">Submit</button>
-		  <button type="button" class="btn btn-default refresh">Refresh</button>
 		  <form action="logout" method = "get">
 			    <input type="submit" class="btn btn-default logout" value="Logout">
 			</form>
+
+
+	  </div-->
+	  <ul id="gn-menu" class="gn-menu-main">
+			<li class="left">
+	      <select class="form-control search_select">
+	      	<option value="alll">Checklists</option>
+				  <option value="checklist">Checklist</option>
+				  <option value="region">Region</option>
+				  <option value="asset">Asset</option>
+				</select>
+			</li>
+			<li class="searchInput"><input placeholder="Search" class="gn-search search" type="search"></li>
+			<li class="right"><a class="logout right" href="#">Logout</a></li>
+			<li class="right"><a class="submit" href="#">Search</a></li>
+		</ul>
+		<div class="bottom">
+		  <div style="clear:both;" class="empty"></div>
+
+		  <div class="plusContainer checklist">
+		  	<div class="plus"><p>+</p></div>
+		  	<div class="refresh"><p>&#10226;</p></div>
+		  </div>
 	  </div>
-	  
-	  <div style="clear:both;"></div>
   </div>
   
 </body>
