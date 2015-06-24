@@ -8,6 +8,7 @@ var ibmpush = require('ibmpush');
 var geojson = require('geojson-utils');
 var session = require('express-session');
 
+
 var user = "a-jq3b5v-nyywcig5q2";
 var pass = "vAlx3YAaFY2xJ!8*Gf";
 
@@ -617,7 +618,11 @@ if (debug){
 // console.log(JSON.stringify(b));
 
 // start server on the specified port and binding host
-app.listen(appEnv.port, appEnv.bind, function() {
+/*app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
+});
+*/
+var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
 });
