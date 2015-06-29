@@ -126,10 +126,11 @@ function assetListFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
-
-		if(!error){
+		var json = JSON.parse(html);
+		console.log(json);
+		
+		if(!json.error){
 			var json = JSON.parse(html);
-			//console.log(json);
 			var data = json[0].evt;
 			
 			var assets = data.assets.split(" , ");
@@ -264,6 +265,8 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 
 		regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
 			var contains = geojson.pointInPolygon(body,regionPolygon);
+			console.log(body);
+			console.log(JSON.stringify(regionPolygon));
 			if (contains){
 				assetsPresent[assetIndex] = true;
 				console.log(asset+" is present in "+regionPolygon.region)
@@ -607,12 +610,12 @@ function main(){
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
 
-//  var a = gju.pointInPolygon({"type":"Point","coordinates":[10,11,16]},{"type":"Polygon", "coordinates":[[[7,7],[12,7],[12,12],[7,12]]]})
+ var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
 // console.log(a);
 
 // console.log(JSON.stringify(b));
