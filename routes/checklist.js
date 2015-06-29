@@ -22,7 +22,7 @@ function getAssetLocation(asset){
 		if (length !== 0)
 			deferred.resolve(body.trace[length - 1]);
 		else
-			deferred.resolve(false);
+			deferred.resolve('');
 	});
 
 	return deferred.promise;
@@ -42,21 +42,31 @@ router.get('/', function(req, res){
 		else if (req.query.region)
 			url = url + '?region=' + req.query.region;
 		else if (req.query.asset){
-			url = url + '?asset=' + req.query.asset;	
-			getAssetLocation(req.query.asset).then(function(data){
-				trace = data;
-			});
+			url = url + '?asset=' + req.query.asset;
 		}
 		console.log(url);
 
 		request(url, function(error, response, html){
-
-			res.render('checklist',{
-				title: "Checklist",
-				content: response.body,
-				username: session_data.username,
-				trace: trace
-			});
+			if (req.query.asset){
+				getAssetLocation(req.query.asset).then(function(data){
+					trace = data;
+					res.render('checklist',{
+						title: "Checklist",
+						content: response.body,
+						username: session_data.username,
+						trace: trace
+					});
+				});
+			}
+			else {
+				res.render('checklist',{
+					title: "Checklist",
+					content: response.body,
+					username: session_data.username,
+					trace: ''
+				});
+			}
+			
 		});
 	}
 	else
@@ -77,7 +87,8 @@ router.post('/', function(req, res){
 	request.post(options, function(request, response){
 		res.render('checklist',{
 			title: "Checklist",
-			content: response.body
+			content: response.body,
+			trace: ''
 		});
 	});
 });

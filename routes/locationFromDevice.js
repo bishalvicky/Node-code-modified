@@ -9,17 +9,12 @@ router.use(function log(req, res, next){
   next();
 });
 
-router.get('/', function(req, res){
-	
+router.post('/', function(req, res){
 });
 
-router.post('/', function(req, res){
-	//var latitude = req.body.latitude;
-	//var longitude = req.body.longitude;
-	//var altitude = req.body.altitude;
-	//res.send("Got a POST request!");
+router.get('/', function(req, res){
 
-	var assetName = req.body.assetName;
+	var assetName = req.query.assetName;
 
 	console.log(assetName);
 
@@ -37,7 +32,7 @@ router.post('/', function(req, res){
 			if(body.type === "gps"){
 			//if(bool){
 
-				console.log("bool is true");
+				
 				var gatewayName = assetName.split("_");
 				gatewayName = "gateway_" + gatewayName[1];
 
@@ -155,13 +150,13 @@ router.post('/', function(req, res){
 				});
 
 				
-				console.log("yahaanaaa");
+				
 
 			}
 
 			else{
 
-				console.log("bool is false");
+				
 
 				var assetTrace = body.trace;
 				console.log("Fetching trace: "+ assetTrace);
@@ -197,7 +192,7 @@ router.post('/', function(req, res){
 
 					//console.log("Promises: "+JSON.strigify(allTrace));
 
-					console.log("Hehe");
+
 
 					//console.log("data: "+data);
 

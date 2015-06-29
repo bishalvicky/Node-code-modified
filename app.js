@@ -607,7 +607,7 @@ function main(){
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
