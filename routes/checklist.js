@@ -32,7 +32,7 @@ router.get('/', function(req, res){
 	session_data = req.session;
 	if(session_data.username){
 		console.log(req.query);
-		var url = 'http://localhost:6001/checklistEndPoint';
+		var url = req.protocol + '://' + req.get('host') + '/checklistEndPoint';
 		var trace = null;
 
 		if (req.query.alll)
@@ -47,6 +47,7 @@ router.get('/', function(req, res){
 				trace = data;
 			});
 		}
+		console.log(url);
 
 		request(url, function(error, response, html){
 
@@ -69,7 +70,7 @@ router.get('/', function(req, res){
 
 router.post('/', function(req, res){
 	var options = {
-		url:'http://localhost:6001/checklistEndPoint', 
+		url: req.protocol + '://' + req.get('host') + '/checklistEndPoint', 
 		form: {data:req.body}
 	};
 
