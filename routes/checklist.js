@@ -7,10 +7,6 @@ router.use(function log(req, res, next){
   next();
 });
 
-
-
-var username = "skjindal93";
-var password = "hehe";
 //var session_data;
 
 //Arguments:

@@ -129,6 +129,8 @@
 		var trueChecklists = []
 		var checklistsCopy = [];
 
+		console.log(data.trace);
+
 		console.log(checklists);
 		
 		var container = $('.container');
@@ -273,7 +275,7 @@
 									.attr('data-type',string)
 									.appendTo(div);
 
-			$(".checklist"+checklist+" #new-todo").val("");
+			
 		};
 
 		//Autocompleting assets and regions fields
@@ -285,9 +287,17 @@
 		      if (a.keyCode === 13){
 		      	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
 		      	update();
+		      	
 		      	checklists[checklistNo].assets.push(b.item.value);
-
+		      	data.assets = data.assets.filter(function(el){
+							return el!== b.item.value;
+						});
+						$(".asset").autocomplete({
+							source: data.assets
+						});
 		  		}
+		  		$(this).val(''); 
+		  		return false;
 		  	}
 		  });
 
@@ -300,6 +310,8 @@
 		      	update();
 		      	checklists[checklistNo].regions.push(b.item.value);
 		  		}
+		  		$(this).val(''); 
+		  		return false;
 		  	}
 		  });
   	};
@@ -370,7 +382,8 @@
 			$("#todo-list .toggle").change(function(){
 				var parent = $(this).parent().parent();
 				var checklistNo = parseInt(parent.attr('data-checklist'));
-				var dataType = $(this).attr('data-type')
+				var dataType = $(this).attr('data-type');
+				console.log(dataType);
 				var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
 				
 				if($(this).is(":checked")) {
@@ -406,6 +419,7 @@
 					
 					if (dataType === 'asset'){
 						checklists[checklistNo].assets.push(parent.attr('id'));
+
 						data.assets = data.assets.filter(function(el){
 							return el!== parent.attr('id');
 						});
