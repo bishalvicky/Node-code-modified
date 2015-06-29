@@ -150,8 +150,10 @@ function assetListFromGateway(gateway){
 						db.insert(json_point,gateway,function(err,body){
 							if(!err)
 								console.log('Updated Doc: ' + gateway);
-							else
-								console.log("Gateway Update Error: " + gateway);
+							else{
+
+								console.log("Gateway Update Error: " + err + "______"+gateway);
+							}
 							deferred.resolve(true);
 						});
 		  		}

@@ -78,9 +78,6 @@ router.get('/', function(req, res){
 							console.log("else chal gya: " +mapInfo[0]);
 							response.end("");
 						}
-
-
-
 					});
 				}
 
