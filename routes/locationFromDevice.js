@@ -57,7 +57,7 @@ router.get('/', function(req, res){
 					}
 					
 					request(options, function(error, response, html){
-						pages++;
+						
 						//res.write(html+"\n\n\n\n\n\n");
 						mapInfo.push(JSON.parse(html));
 						//str += html+"<br><br><br><br><br>";

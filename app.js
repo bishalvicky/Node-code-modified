@@ -127,8 +127,7 @@ function assetListFromGateway(gateway){
 
 	request(options, function(error, response, html){
 		var json = JSON.parse(html);
-		console.log(json);
-		
+
 		if(!json.error){
 			var json = JSON.parse(html);
 			var data = json[0].evt;
@@ -265,8 +264,6 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 
 		regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
 			var contains = geojson.pointInPolygon(body,regionPolygon);
-			console.log(body);
-			console.log(JSON.stringify(regionPolygon));
 			if (contains){
 				assetsPresent[assetIndex] = true;
 				console.log(asset+" is present in "+regionPolygon.region)
