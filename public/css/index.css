@@ -1,3 +1,11 @@
+@font-face {
+		font-weight: normal;
+		font-style: normal;
+		font-family: 'ecoicons';
+		src: url("../fonts/ecoicons/ecoicons.eot");
+		src: url("../fonts/ecoicons/ecoicons.eot?#iefix") format("embedded-opentype"), url("../fonts/ecoicons/ecoicons.woff") format("woff"), url("../fonts/ecoicons/ecoicons.ttf") format("truetype"), url("../fonts/ecoicons/ecoicons.svg#ecoicons") format("svg");
+}
+
 html,
 body {
 	margin: 0;
@@ -43,6 +51,7 @@ input[type="checkbox"] {
 .checklist{
 	margin-top: 7%;
 	width: 300px;
+	margin-bottom: 7%;
 }
 #todoapp {
 	margin-bottom: 5%;
@@ -105,7 +114,6 @@ input[type="checkbox"] {
 	height: 100%;
 }
 #new-todo{
-
 	position: relative;
 	margin: 0;
 	width: 100%;
@@ -397,4 +405,111 @@ html #clear-completed:active {
 	#filters {
 		bottom: 10px;
 	}
+}
+
+.gn-menu-main,
+.gn-menu-main ul {
+		margin: 0;
+		padding: 0;
+		background: white;
+		color: #5f6f81;
+		list-style: none;
+		text-transform: none;
+		font-weight: 300;
+		font-family: 'Lato', Arial, sans-serif;
+		line-height: 60px;
+}
+
+.gn-menu-main {
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 60px;
+		font-size: 13px;
+}
+
+.gn-menu-main a {
+		display: block;
+		height: 100%;
+		color: #5f6f81;
+		text-decoration: none;
+		cursor: pointer;
+}
+
+.gn-menu-main a:hover {
+		display: block;
+		height: 100%;
+		color: white;
+		background-color: #5f6f81;
+		text-decoration: none;
+		cursor: pointer;
+}
+
+.gn-menu-main > li {
+		display: block;
+		float: left;
+		height: 100%;
+		text-align: center;
+}
+
+.gn-menu-main > li.searchInput {
+		display: block;
+		float: left;
+		height: 100%;
+		text-align: left;
+}
+
+.searchInput{
+	width: 69%;
+	text-align: left;
+}
+/* icon-only trigger (menu item) */
+
+.gn-menu-main li.gn-trigger {
+		position: relative;
+		width: 60px;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+}
+
+.gn-menu-main > li.right {
+		float: right;
+		border-right: none;
+		border-left: 1px solid #c6d0da;
+}
+
+.gn-menu-main > li > a {
+		padding: 0 30px;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		font-weight: bold;
+}
+
+.gn-menu-main:after {
+		display: table;
+		clear: both;
+		content: "";
+}
+
+.gn-menu {
+		border-bottom: 1px solid #c6d0da;
+		text-align: left;
+		font-size: 18px;
+}
+input.gn-search {
+		position: relative;
+		padding-left: 10px;
+		z-index: 10;
+		width: 100%;
+		outline: none;
+		border: none;
+		background: transparent;
+		color: #5f6f81;
+		font-weight: 300;
+		font-family: 'Lato', Arial, sans-serif;
+		font-size: 20px;
 }

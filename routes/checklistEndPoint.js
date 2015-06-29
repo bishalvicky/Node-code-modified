@@ -65,12 +65,16 @@ router.get('/', function(req, res){
 
 	var deferredData = Q.defer();
 	db.get("data", function(err, body){
+		console.log(body.assets);
 		trueAssets = body.assets.slice();
 		trueRegions = body.regions.slice();
 		regions = body.regions;
 		assets = body.assets;
 		deferredData.resolve(true);
+		console.log(regions);
 	});
+	
+
 	promises.push(deferredData.promise);
 
 	var deferredUser = Q.defer();

@@ -7,6 +7,7 @@
 	<script src="public/js/jquery.js"></script>
 	<script type="text/javascript">
 	$(document).ready(function(){
+
 		$(".submit").click(function(e){
 			e.preventDefault();
 			var password = $("#password").val();
@@ -17,6 +18,7 @@
 				else
 					$("#error_msg").html("<span style='color:red;'>Password mismatch!!</span>");
 		});
+
 		$(".check").click(function(){
 			$.ajax({
 	      url: 'register/check',
@@ -37,6 +39,8 @@
 	      }
 	    });
 		});
+
+		
 	});
 		
 	</script>
