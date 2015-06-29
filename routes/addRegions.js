@@ -7,7 +7,24 @@ router.use(function log(req, res, next){
 });
 
 router.get('/', function(req, res){
+  console.log("got a get request");
 
+  var gatewayList;
+
+  db.get("data", function(err, body){
+    if(!err){
+      gatewayList = body.gateways;
+    }
+
+    else{
+      gatewayList = ["error aa gya"];
+
+    }
+
+    res.send(gatewayList);
+
+    console.log("gateList sent: "+gatewayList);
+  });
 });
 
 router.post('/', function(req, res){
@@ -16,12 +33,12 @@ router.post('/', function(req, res){
 	//var altitude = req.body.altitude;
   //res.send("Got a POST request!");
 
-
+  console.log("got a post request");
   console.log("android APPPP: "+JSON.stringify(req.body));
 
-  //enterRegionsIntoData(req.body);
+  enterRegionsIntoData(req.body);
 
-  //createRegionDoc(req.body);
+  createRegionDoc(req.body);
   
 
 });
@@ -30,9 +47,53 @@ router.post('/', function(req, res){
 function enterRegionsIntoData(enteredInfo){
   var alldata;
 
+  var regName = enteredInfo.regionName;
+
   db.get("data", function(err, body){
     alldata = body;
     var rev;
+
+    if(!err){
+      console.log("data exists");
+      var regionList = alldata.regions;
+
+      if(regionList.indexOf(regName) < 0){ // data does not already contain this region
+        console.log("region does not exist in data");
+        var regionList = regionList.concat(regName);
+        var json = {"assets": alldata.assets, 
+                    "gateways": alldata.gateways,
+                    "regions": regionList,
+                    "users": alldata.users,
+                    "_rev": alldata._rev
+                    };
+
+        db.insert(json, "data", function(err, body, header){
+          console.log("inserted");
+        });
+      }
+
+      else{
+        console.log("region is in data");
+      }
+      
+
+    }
+
+    else{
+      console.log("data file not exists");
+      var json = {"assets": "", 
+                  "gateways": "",
+                  "regions": regName,
+                  "users": ""
+                  };
+
+      db.insert(json, "data", function(err, body, header){
+        console.log("inserted");
+      });
+
+    }
+
+/*
 
     if(typeof body != "undefined"){
 
@@ -40,7 +101,7 @@ function enterRegionsIntoData(enteredInfo){
 
       rev = body._rev;
 
-      var regionList = alldata.regions.concat(enteredInfo.regions)
+      var regionList = alldata.regions.concat(enteredInfo.regionName)
       var json = {"assets": alldata.assets, 
                   "gateways": alldata.gateways,
                   "regions": regionList,
@@ -61,7 +122,7 @@ function enterRegionsIntoData(enteredInfo){
       console.log("else chala");
       var json = {"assets": "", 
                   "gateways": "",
-                  "regions": enteredInfo.regions,
+                  "regions": enteredInfo.regionName,
                   "users": ""
       };
 
@@ -69,10 +130,55 @@ function enterRegionsIntoData(enteredInfo){
         console.log("inserted");
       });
     }
+
+    */
   });
+
+
 };
 
+function createRegionDoc(enteredInfo){
+  var regionName = enteredInfo.regionName;
+  var gatewayList = enteredInfo.gateways;
 
+  console.log(gatewayList);
+
+  db.get(enteredInfo.regionName, function(err, body){
+    var json;
+
+    if(!err){ // region already exists
+      console.log(enteredInfo.regionName + " region exists")
+      json = {"type": "Polygon",
+              "coordinates": enteredInfo.points,
+              "altitudeLow": enteredInfo.altLow,
+              "altitudeHigh": enteredInfo.altHigh,
+              "gateways": gatewayList,
+              "_rev": body._rev
+      };     
+
+    }
+
+    else{ // new region
+      console.log(enteredInfo.regionName + " new region")
+
+      json = {"type": "Polygon",
+              "coordinates": enteredInfo.points,
+              "altitudeLow": enteredInfo.altLow,
+              "altitudeHigh": enteredInfo.altHigh,
+              "gateways": gatewayList,
+      };
+
+    }
+
+    db.insert(json, enteredInfo.regionName, function(err, body, header){
+      if(!err) console.log(enteredInfo.regionName + " inserted");
+    });
+
+  });
+
+};
+
+/*
 function createRegionDoc(enteredInfo){
 
   var listOfRegions = enteredInfo.regions;
@@ -116,5 +222,5 @@ function createRegionDoc(enteredInfo){
     });
   });
 };
-
+*/
 module.exports = router;
