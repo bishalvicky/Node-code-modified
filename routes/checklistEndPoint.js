@@ -65,6 +65,7 @@ router.get('/', function(req, res){
 
 	var deferredData = Q.defer();
 	db.get("data", function(err, body){
+		console.log(body.assets);
 		trueAssets = body.assets.slice();
 		trueRegions = body.regions.slice();
 		regions = body.regions;
