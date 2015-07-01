@@ -126,10 +126,10 @@ function assetListFromGateway(gateway){
 	}
 
 	request(options, function(error, response, html){
+		var json = JSON.parse(html);
 
-		if(!error){
+		if(!json.error){
 			var json = JSON.parse(html);
-			//console.log(json);
 			var data = json[0].evt;
 			
 			var assets = data.assets.split(" , ");
@@ -150,8 +150,10 @@ function assetListFromGateway(gateway){
 						db.insert(json_point,gateway,function(err,body){
 							if(!err)
 								console.log('Updated Doc: ' + gateway);
-							else
-								console.log("Gateway Update Error: " + gateway);
+							else{
+
+								console.log("Gateway Update Error: " + err + "______"+gateway);
+							}
 							deferred.resolve(true);
 						});
 		  		}
@@ -607,12 +609,12 @@ function main(){
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	main();
 }
 
-//  var a = gju.pointInPolygon({"type":"Point","coordinates":[10,11,16]},{"type":"Polygon", "coordinates":[[[7,7],[12,7],[12,12],[7,12]]]})
+ var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
 // console.log(a);
 
 // console.log(JSON.stringify(b));

@@ -33,6 +33,25 @@
 .plusContainer{
 	margin-top: 3%;
 }
+.plus{
+	background-image: url("public/images/plus.png");
+	background-size: 85% 85%;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+.plus:hover{
+	background-image: url("public/images/plus_hover.png");
+}
+.refresh{
+	background-image: url("public/images/refresh.png");
+	background-size: 85% 85%;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+.refresh:hover{
+	background-image: url("public/images/refresh_hover.png");
+}
+
 .plus,.refresh{
 	margin: 0 auto;
 	color: black;
@@ -48,12 +67,18 @@
   -o-transition: background-color 250ms linear;
   -ms-transition: background-color 250ms linear;
   transition: background-color 250ms linear;
+  -webkit-transition: background-image 250ms linear;
+  -moz-transition: background-image 250ms linear;
+  -o-transition: background-image 250ms linear;
+  -ms-transition: background-image 250ms linear;
+  transition: background-image 250ms linear;
 }
 
 .refresh{
 	margin-top: 10%;
 }
 .plus:hover,.refresh:hover{
+
 	background-color: black;
 	color: rgb(174, 174, 174);
 	-webkit-transition: background-color 250ms linear;
@@ -61,6 +86,11 @@
   -o-transition: background-color 250ms linear;
   -ms-transition: background-color 250ms linear;
   transition: background-color 250ms linear;
+  -webkit-transition: background-image 250ms linear;
+  -moz-transition: background-image 250ms linear;
+  -o-transition: background-image 250ms linear;
+  -ms-transition: background-image 250ms linear;
+  transition: background-image 250ms linear;
 }
 .plus p, .refresh p{
 	font-size: 200px;
@@ -123,13 +153,13 @@
 
 		//variables
 		var data = <%- content %>;
+		var trace = <%- JSON.stringify(trace) %>;
 		var checklists = data.checklists;
 		var trueAssets = data.trueAssets;
 		var trueRegions = data.trueRegions;
 		var trueChecklists = []
 		var checklistsCopy = [];
 
-		console.log(data.trace);
 
 		console.log(checklists);
 		
@@ -196,7 +226,12 @@
 			console.log(formKey);
 			console.log(getValue);
 			get('/checklist',"get",formKey,getValue);
+		});
 
+		$(".track").click(function(e){
+			e.preventDefault();
+			var getValue = $(".search").val();
+			get('/locationFromDevice',"get","assetName",getValue);
 		});
 
 		//Logging out the user
@@ -277,6 +312,11 @@
 
 			
 		};
+
+		console.log(trace);
+
+		if (trace !== '')
+			$(".assetQuery").html("Present in "+trace.gateway);
 
 		//Autocompleting assets and regions fields
 		function autocomplete(){
@@ -478,13 +518,14 @@
 			<li class="searchInput"><input placeholder="Search" class="gn-search search" type="search"></li>
 			<li class="right"><a class="logout right" href="#">Logout</a></li>
 			<li class="right"><a class="submit" href="#">Search</a></li>
+			<li class="right"><a class="track" href="#">Track</a></li>
 		</ul>
 		<div class="bottom">
 		  <div style="clear:both;" class="empty"></div>
-
+		  <div class="assetQuery"></div>
 		  <div class="plusContainer checklist">
-		  	<div class="plus"><p>+</p></div>
-		  	<div class="refresh"><p>&#10226;</p></div>
+		  	<div class="plus"></div>
+		  	<div class="refresh"></div>
 		  </div>
 	  </div>
   </div>

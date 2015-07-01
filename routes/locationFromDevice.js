@@ -9,17 +9,12 @@ router.use(function log(req, res, next){
   next();
 });
 
-router.get('/', function(req, res){
-	
+router.post('/', function(req, res){
 });
 
-router.post('/', function(req, res){
-	//var latitude = req.body.latitude;
-	//var longitude = req.body.longitude;
-	//var altitude = req.body.altitude;
-	//res.send("Got a POST request!");
+router.get('/', function(req, res){
 
-	var assetName = req.body.assetName;
+	var assetName = req.query.assetName;
 
 	console.log(assetName);
 
@@ -38,6 +33,7 @@ router.post('/', function(req, res){
 			//if(bool){
 
 				console.log("Asset is type GPS");
+
 				var gatewayName = assetName.split("_");
 				gatewayName = "gateway_" + gatewayName[1];
 
@@ -62,7 +58,7 @@ router.post('/', function(req, res){
 					}
 					
 					request(options, function(error, response, html){
-						pages++;
+						
 						//res.write(html+"\n\n\n\n\n\n");
 						mapInfo.push(JSON.parse(html));
 						//str += html+"<br><br><br><br><br>";
@@ -83,9 +79,6 @@ router.post('/', function(req, res){
 							console.log("else chal gya: " +mapInfo[0]);
 							response.end("");
 						}
-
-
-
 					});
 				}
 
@@ -155,7 +148,7 @@ router.post('/', function(req, res){
 				});
 
 				
-				console.log("yahaanaaa");
+				
 
 			}
 
@@ -197,7 +190,7 @@ router.post('/', function(req, res){
 
 					//console.log("Promises: "+JSON.strigify(allTrace));
 
-					console.log("Hehe");
+
 
 					//console.log("data: "+data);
 

@@ -36,6 +36,21 @@ router.post('/', function(req, res){
 					});
 				}
 			}
+			else{
+				var data_json = {
+					"assets": [],
+				  "gateways": [],
+				  "regions": [],
+				  "users": [username]
+				};
+				
+			  db.insert(data_json, "data",function(err,body){
+					console.log("Data Created");
+					db.insert(user_json, username,function(err,body){
+						console.log("Inserted")
+					});
+				});
+			}
 		});
 
 		res.redirect('login');
