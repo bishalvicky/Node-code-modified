@@ -37,7 +37,7 @@ router.post('/', function(req, res){
 			if(body.type === "gps"){
 			//if(bool){
 
-				console.log("bool is true");
+				console.log("Asset is type GPS");
 				var gatewayName = assetName.split("_");
 				gatewayName = "gateway_" + gatewayName[1];
 
@@ -161,7 +161,7 @@ router.post('/', function(req, res){
 
 			else{
 
-				console.log("bool is false");
+				console.log("Asset is not GPS");
 
 				var assetTrace = body.trace;
 				console.log("Fetching trace: "+ assetTrace);
