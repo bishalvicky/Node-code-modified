@@ -131,7 +131,7 @@ function assetListFromGateway(gateway){
 		if(!json.error){
 			var json = JSON.parse(html);
 			var data = json[0].evt;
-			
+			console.log(data);
 			var assets = data.assets.split(" , ");
 			var latitude = data.latitude;
 			var longitude = data.longitude;
@@ -143,31 +143,9 @@ function assetListFromGateway(gateway){
 				"assets": assets
 			}
 
-			db.get(gateway, function(err, body) {
-
-			  	if (!err){
-						json_point._rev = body._rev;
-						db.insert(json_point,gateway,function(err,body){
-							if(!err)
-								console.log('Updated Doc: ' + gateway);
-							else{
-
-								console.log("Gateway Update Error: " + err + "______"+gateway);
-							}
-							deferred.resolve(true);
-						});
-		  		}
-
-			  	else {
-		  			db.insert(json_point,gateway,function(err,body){
-							if(!err)
-								console.log('Updated Doc: ' + gateway);
-							else
-								console.log("Gateway Update Error: " + gateway);
-							deferred.resolve(true);
-						});
-		  		}
-			});	
+			insertToDb(json_point,gateway).then(function(){
+				deferred.resolve(true);
+			});
 		}
 		else{
 			deferred.resolve(false);
@@ -532,8 +510,9 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 				console.log("Failed to send notification to all devices.");
 				console.log(err);
 			});	
-			db.insert(asset_json, asset, function(err, body, header) {
-				deferred.resolve(true);
+			
+			insertToDb(asset_json, asset).then(function(){
+				deffered.resolve(true);
 			});
 		}
 	});
@@ -542,79 +521,110 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 
 
 
-function main(){
+function userCheckLists(username){
 	console.log("\n\nMain:\n");
-	var deferredMain = Q.defer();
-	//Get the name of the logged in user from session
-	var username = "skjindal93";
-	var password = "hehe"; //Password filled by user
-	var ERROR = false; 
-	
+	var defferedUser = Q.defer();
+	var ERROR = false;
 
 	db.get(username, function(err, bodyUsername){
-		//Check password
-		if (password === bodyUsername.password){
-			//Authenticated
-			
-			db.get("data", function(err, body){
-				globalRegions = body.regions;
-				var promisesX = [];
-				var promisesChecklist = [];
-				var gateways = body.gateways;
-				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
-				gateways.forEach(function (gateway, gatewayIndex){
-					var deferredPromise = Q.defer();
-					//console.log("Gateways Started");
-					assetListFromGateway(gateway).then(function(data){
-						if(!data)
-							ERROR = true;
-						deferredPromise.resolve(true);
-					});
-					promisesX.push(deferredPromise.promise);
+		db.get("data", function(err, body){
+			globalRegions = body.regions;
+			var promisesX = [];
+			var promisesChecklist = [];
+			var gateways = body.gateways;
+			//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
+			gateways.forEach(function (gateway, gatewayIndex){
+				var deferredPromise = Q.defer();
+				//console.log("Gateways Started");
+				assetListFromGateway(gateway).then(function(data){
+					if(!data)
+						ERROR = true;
+					deferredPromise.resolve(true);
 				});
-
-				var checklists = bodyUsername.checklists;
-
-				Q.all(promisesX).then(function(data){
-					
-					if(!ERROR){
-						console.log("Checklist Started:");
-						var promisesChecklists = [];
-						checklists.forEach(function(checklist,checklistIndex){
-							var promisecheckChecklist = Q.defer();
-							checkCheckList(checklist).then(function(){
-								promisecheckChecklist.resolve(true);
-							});
-							promisesChecklists.push(promisecheckChecklist.promise);
-						});
-						Q.all(promisesChecklists).then(function(){
-							//console.log("Length: "+promisesChecklists.length);
-							//callback();
-							deferredMain.resolve("Main Done");
-							console.log("Main Done!!");
-						});
-					}
-					else{
-						deferredMain.resolve("Main Done");
-						console.log("Main Done with error!!");
-					}
-					
-				});
-
+				promisesX.push(deferredPromise.promise);
 			});
-		}
+
+			var checklists = bodyUsername.checklists;
+
+			Q.all(promisesX).then(function(data){
+				
+				if(!ERROR){
+					console.log("Checklist Started:");
+					var promisesChecklists = [];
+					checklists.forEach(function(checklist,checklistIndex){
+						var promisecheckChecklist = Q.defer();
+						checkCheckList(checklist).then(function(){
+							promisecheckChecklist.resolve(true);
+						});
+						promisesChecklists.push(promisecheckChecklist.promise);
+					});
+					Q.all(promisesChecklists).then(function(){
+						//console.log("Length: "+promisesChecklists.length);
+						//callback();
+						defferedUser.resolve("Main Done");
+						console.log("Main Done!!");
+					});
+				}
+				else{
+					defferedUser.resolve("Main Done");
+					console.log("Main Done with error!!");
+				}
+				
+			});
+
+		});
+
 	});
-	deferredMain.promise.then(function(){
-		main();
+	defferedUser.promise.then(function(){
+		userCheckLists(username);
 	});
 };
 
 var debug = true;
 if (debug){
-	main();
+	userCheckLists("skjindal93");
 }
 
- var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
+
+
+
+//Posetively insert data
+
+function insertToDb(msg,name){
+	jsn = msg;
+	console.log("Trying");
+	var function_deferred = Q.defer();
+	var deffered = Q.defer();
+	db.get(name,function(error,body){
+		if(!error)
+			jsn._rev = body._rev;
+		//console.log(JSON.stringify(jsn));
+		db.insert(jsn,name,function(err,body){
+			if(err)
+				console.log("Conflict");
+			else
+				console.log("Inserted");
+			deffered.resolve(err);
+		});
+	});
+	deffered.promise.then(function(err){
+		if(err)
+			insertToDb(jsn,name);
+		else
+			function_deferred.resolve(true);
+	});
+	return function_deferred.promise;
+};
+
+
+// var jsn = {
+// 	"Num": 5
+// };
+// insertToDb(jsn,"test2");
+
+
+		
+ //var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
 // console.log(a);
 
 // console.log(JSON.stringify(b));
