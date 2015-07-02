@@ -8,10 +8,6 @@ var ibmpush = require('ibmpush');
 var geojson = require('geojson-utils');
 var session = require('express-session');
 
-
-var user = "a-jq3b5v-nyywcig5q2";
-var pass = "vAlx3YAaFY2xJ!8*Gf";
-
 var appConfig = {
     applicationId: "f1e442d6-79bb-4e42-baee-3da1d7ac583c",
     applicationRoute: "http://node-code.mybluemix.net",
@@ -94,14 +90,22 @@ function initDBConnection() {
 			dbCredentials.password = vcapServices.cloudantNoSQLDB[0].credentials.password;
 			dbCredentials.url = vcapServices.cloudantNoSQLDB[0].credentials.url;
 		}
+		if (vcapServices["iotf-service"]) {
+			user = vcapServices["iotf-service"][0].credentials.apiKey;
+			pass = vcapServices["iotf-service"][0].credentials.apiToken;
+			org = vcapServices["iotf-service"][0].credentials.org;
+		}
 		console.log('VCAP Services: '+JSON.stringify(process.env.VCAP_SERVICES));
 	}
 	  else{
-	    	dbCredentials.host = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
+	    dbCredentials.host = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
 			dbCredentials.port = 443;
 			dbCredentials.user = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix";
 			dbCredentials.password = "f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6";
 			dbCredentials.url = "https://f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix:f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6@f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
+	  	user = "a-jq3b5v-nyywcig5q2";
+			pass = "vAlx3YAaFY2xJ!8*Gf";
+			org = "rgecs9";
 	  }
 
 	cloudant = require('cloudant')(dbCredentials.url);
@@ -119,7 +123,7 @@ initDBConnection();
 function assetListFromGateway(gateway){
 	var deferred = Q.defer();
 	var options = {
-	  url: 'https://jq3b5v.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
+	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
 	  headers: {
 	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
 	  }
@@ -609,15 +613,47 @@ function main(){
 	});
 };
 
-var debug = true;
+var debug = false;
 if (debug){
 	main();
 }
 
- var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
+var jsn = {
+	"Num": 5
+};
+
+function insertToDb(jsn,name){
+	console.log("Trying");
+	var function_deferred = Q.defer();
+	var deffered = Q.defer();
+	db.get(name,function(error,body){
+		jsn._rev = body._rev;
+		db.insert(jsn,name,function(err,body){
+		
+		if(err)
+			console.log("Conflict");
+		else
+			console.log("Inserted");
+			deffered.resolve(err);
+		});
+	});
+
+	deffered.promise.then(function(error){
+		if(error)
+			insertToDb(jsn,name);
+		else
+			function_deferred.resolve(true);
+	});
+
+	function_deferred.promise.then(function(){
+		insertToDb(jsn,name);	
+	});
+}
+insertToDb(jsn,"test");	
+
+//var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
 // console.log(a);
 
-// console.log(JSON.stringify(b));
 
 // start server on the specified port and binding host
 app.listen(appEnv.port, appEnv.bind, function() {
