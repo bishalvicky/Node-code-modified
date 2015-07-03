@@ -33,6 +33,7 @@ router.post('/', function(req, res){
 			if (password === body.password){
 				
 				session_data.username = username;
+				session_data.password = password;
 				console.log(req.session);
 				req.session.save();
 				res.redirect('checklist');		
