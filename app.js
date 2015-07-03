@@ -39,6 +39,7 @@ var logout = require('./routes/logout');
 
 var register = require('./routes/register');
 var login = require('./routes/login');
+var logincheck = require('./routes/logincheck');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
@@ -64,6 +65,7 @@ app.use('/setup', setup);
 app.use('/checklist', checklist);
 app.use('/register',register);
 app.use('/login',login);
+app.use('/logincheck',logincheck);
 app.use('/addChecklist', addChecklist);
 app.use('/checklistEndPoint',checklistEndPoint);
 app.use('/logout',logout)
@@ -103,8 +105,8 @@ function initDBConnection() {
 			dbCredentials.user = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix";
 			dbCredentials.password = "f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6";
 			dbCredentials.url = "https://f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix:f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6@f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
-	  	user = "a-jq3b5v-nyywcig5q2";
-			pass = "vAlx3YAaFY2xJ!8*Gf";
+	  	user = "a-rgecs9-wssdsn55el";
+			pass = "6vCRrc9UaFE?kwO@Z3";
 			org = "rgecs9";
 	  }
 
@@ -121,21 +123,21 @@ initDBConnection();
 
 
 function assetListFromGateway(gateway){
+
 	var deferred = Q.defer();
 	var options = {
-	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
+	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/Pi/'+gateway+'?top=1',
 	  headers: {
 	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
 	  }
 	}
-
+	
 	request(options, function(error, response, html){
 		var json = JSON.parse(html);
 
 		if(!json.error){
 			var json = JSON.parse(html);
 			var data = json[0].evt;
-			console.log(data);
 			var assets = data.assets.split(" , ");
 			var latitude = data.latitude;
 			var longitude = data.longitude;
@@ -145,15 +147,16 @@ function assetListFromGateway(gateway){
 				"type": "Point",
 				"coordinates": [latitude, longitude, altitude],
 				"assets": assets
-			}
-
+			};
+			//console.log(options.url + "hehehehehehhehehehe"+JSON.stringify(json_point));
 			insertToDb(json_point,gateway).then(function(){
+				//console.log(json_point);
 				deferred.resolve(true);
 			});
 		}
 		else{
 			deferred.resolve(false);
-			console.log("URL ERROR!!!")
+			console.log("URL ERROR!!!");
 		}
 			
 	});
@@ -222,6 +225,7 @@ function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
 				assetsPresent[assetIndex] = true;
 				message_alert = asset+": Now present in "+gateways[gatewayIndex];
 				addToTraceAndNotify(asset, gateway, message_alert).then(function(){
+					console.log("Here!!!");
 					deferredGateway.resolve(true);
 				});
 			}	
@@ -288,6 +292,7 @@ function checkCheckList(checklist){
 			db.get(asset, function(err, bodyAsset){
 				if (bodyAsset.type !== "gps"){
 					checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex).then(function(){
+						
 						deferred_asset.resolve(true);
 					});
 				}
@@ -321,7 +326,7 @@ function checkCheckList(checklist){
 								});
 							}
 							else{
-								checkInOtherRegions(assets[assetBooleanIndex],checklist.regions).then(function(){
+								checkInOtherRegionsNonGPS(assets[assetBooleanIndex],checklist.regions).then(function(){
 									promiseCheckInOtherRegions.resolve(true);
 								});
 							}
@@ -346,7 +351,7 @@ function checkCheckList(checklist){
 }
 
 
-function checkInOtherRegions(asset,checkedRegions){
+function checkInOtherRegionsNonGPS(asset,checkedRegions){
 	var found = 0;
 	var deferred = Q.defer();
 	var message_alert;
@@ -366,6 +371,7 @@ function checkInOtherRegions(asset,checkedRegions){
 
 					//get all gateways in that region
 					var gatewaysInRegion = body.gateways;
+				
 					
 					var promiseRegion = function(){
 						var promisesGateways = [];
@@ -384,6 +390,7 @@ function checkInOtherRegions(asset,checkedRegions){
 									message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
 									console.log(message_alert);
 									addToTraceAndNotify(asset,gatewayInRegion,message_alert).then(function(){
+										console.log("XXXXX");
 										deferredGateway.resolve(true);
 									});
 								}
@@ -411,6 +418,7 @@ function checkInOtherRegions(asset,checkedRegions){
 				message_alert = "Missing Asset: "+asset+ " Not found anywhere!!";
 				console.log(message_alert);
 				addToTraceAndNotify(asset,"Missing",message_alert).then(function(){
+					
 					deferred.resolve(true);
 				});
 			}
@@ -494,6 +502,7 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 		};
 		//console.log(body.trace, body.trace.length);
 		var exactly = false;
+
 		if (body.trace.length === 0){
 			exactly = true;
 		}
@@ -516,7 +525,7 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 			});	
 			
 			insertToDb(asset_json, asset).then(function(){
-				deffered.resolve(true);
+				deferred.resolve(true);
 			});
 		}
 	});
@@ -527,7 +536,7 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 
 function userCheckLists(username){
 	console.log("\n\nMain:\n");
-	var defferedUser = Q.defer();
+	var deferredUser = Q.defer();
 	var ERROR = false;
 
 	db.get(username, function(err, bodyUsername){
@@ -565,12 +574,12 @@ function userCheckLists(username){
 					Q.all(promisesChecklists).then(function(){
 						//console.log("Length: "+promisesChecklists.length);
 						//callback();
-						defferedUser.resolve("Main Done");
+						deferredUser.resolve("Main Done");
 						console.log("Main Done!!");
 					});
 				}
 				else{
-					defferedUser.resolve("Main Done");
+					deferredUser.resolve("Main Done");
 					console.log("Main Done with error!!");
 				}
 				
@@ -579,12 +588,12 @@ function userCheckLists(username){
 		});
 
 	});
-	defferedUser.promise.then(function(){
+	deferredUser.promise.then(function(){
 		userCheckLists(username);
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	userCheckLists("skjindal93");
 }
@@ -595,24 +604,25 @@ var jsn = {
 
 //Posetively insert data
 
-function insertToDb(msg,name){
-	jsn = msg;
-	console.log("Trying");
+function insertToDb(jsn,name){
+	//console.log("Trying");
 	var function_deferred = Q.defer();
-	var deffered = Q.defer();
+	var deferred = Q.defer();
 	db.get(name,function(error,body){
-		if(!error)
+		if(!error){
 			jsn._rev = body._rev;
+			//console.log(body._rev);
+		}
 		//console.log(JSON.stringify(jsn));
 		db.insert(jsn,name,function(err,body){
 			if(err)
 				console.log("Conflict");
 			else
 				console.log("Inserted");
-			deffered.resolve(err);
+			deferred.resolve(err);
 		});
 	});
-	deffered.promise.then(function(error){
+	deferred.promise.then(function(error){
 		if(error)
 			insertToDb(jsn,name);
 		else
