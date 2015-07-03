@@ -28,6 +28,37 @@ var dbCredentials = {
 	dbName : 'nodered'
 };
 
+function checkBasicAuthentication(req){
+	var auth = req.headers['authorization'];
+	if(!auth) {
+		res.statusCode = 401;
+		res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
+		res.end(JSON.stringify({"error":"No credentials passed!"}));
+	}
+	else if(auth) {
+		var tmp = auth.split(' ');   // Split on a space, the original auth looks like  "Basic Y2hhcmxlczoxMjM0NQ==" and we need the 2nd part
+
+		var buf = new Buffer(tmp[1], 'base64'); // create a buffer and tell it the data coming in is base64
+		var plain_auth = buf.toString();        // read it back out as a string
+
+		// At this point plain_auth = "username:password"
+		var creds = plain_auth.split(':');      // split on a ':'
+		var username = creds[0];
+		var password = creds[1];
+
+		
+		if((username == 'hack') && (password == 'thegibson')) {
+      res.statusCode = 200;  // OK
+		}
+		else {
+			res.statusCode = 401; // Force them to retry authentication
+			res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
+			res.end(JSON.stringify({"error":"Username / Password not valid"}));
+		}
+	}
+}
+
+
 var insertdb = require('./routes/insertdb');
 var locationFromDevice = require('./routes/locationFromDevice');
 var addGateways = require('./routes/addGateways');

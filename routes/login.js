@@ -25,32 +25,6 @@ router.get('/', function(req, res){
 router.post('/', function(req, res){
 
 	session_data = req.session;
-	
-	// db.get(username, function(err, body){
-	// 	//Check password
-	// 	if(!err){
-	// 		if (password === body.password){
-				
-	// 			session_data.username = username;
-	// 			console.log(req.session);
-	// 			req.session.save();
-	// 			res.redirect('checklist');		
-
-
-	// 		}
-	// 		else{
-	// 			res.render('login',{
-	// 				error: "Username and password missmatch!"
-	// 			});
-	// 		}
-	// 	}
-	// 	else{
-	// 		res.render('login',{
-	// 			error: "User doesn't exist!"
-	// 		});
-	// 	}
-	// });
-
 	var options = {
 		url: req.protocol + '://' + req.get('host') + '/logincheck', 
 		form: {data:req.body}
@@ -64,7 +38,7 @@ router.post('/', function(req, res){
 		if(check){
 			session_data.username = req.body.username;
 			req.session.save();
-			res.redirect('checklist');		
+			res.redirect('checklist');
 		}
 		else{
 			res.render('login',{
