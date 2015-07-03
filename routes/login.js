@@ -32,7 +32,6 @@ router.post('/', function(req, res){
 
 	request.post(options, function(request, response){
 		var body =  JSON.parse(response.body);
-
 		var check = body.status;
 
 		if(check){

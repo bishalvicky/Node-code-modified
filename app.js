@@ -29,11 +29,10 @@ var dbCredentials = {
 };
 
 function checkBasicAuthentication(req){
+	var deferred = Q.defer();
 	var auth = req.headers['authorization'];
 	if(!auth) {
-		res.statusCode = 401;
-		res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-		res.end(JSON.stringify({"error":"No credentials passed!"}));
+		deferred.resolve(JSON.stringify({"status":false,"error":"No credentials passed!"}));
 	}
 	else if(auth) {
 		var tmp = auth.split(' ');   // Split on a space, the original auth looks like  "Basic Y2hhcmxlczoxMjM0NQ==" and we need the 2nd part
@@ -46,18 +45,22 @@ function checkBasicAuthentication(req){
 		var username = creds[0];
 		var password = creds[1];
 
-		
-		if((username == 'hack') && (password == 'thegibson')) {
-      res.statusCode = 200;  // OK
-		}
-		else {
-			res.statusCode = 401; // Force them to retry authentication
-			res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"');
-			res.end(JSON.stringify({"error":"Username / Password not valid"}));
-		}
+		var options = {
+			url: req.protocol + '://' + req.get('host') + '/logincheck', 
+			form: {data:req.body}
+		};
+
+		request.post(options, function(request, response){
+			var body =  JSON.parse(response.body);
+			var check = body.status;
+
+			deferred.resolve(body);
+		});
 	}
+	return deferred.promise;
 }
 
+functions = {checkBasicAuthentication : checkBasicAuthentication};
 
 var insertdb = require('./routes/insertdb');
 var locationFromDevice = require('./routes/locationFromDevice');
@@ -154,7 +157,6 @@ initDBConnection();
 
 
 function assetListFromGateway(gateway){
-
 	var deferred = Q.defer();
 	var options = {
 	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/Pi/'+gateway+'?top=1',
@@ -526,11 +528,11 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 			"trace" : arr
 		};
 
-		var message = { 
-			//"alert" : "Missing Asset: "+ asset + "	Now in Gateway:" + gateway ,
+		var message = {
 			"alert": message_alert,
 			"url": "http://www.google.com"
 		};
+
 		//console.log(body.trace, body.trace.length);
 		var exactly = false;
 
@@ -637,14 +639,11 @@ var jsn = {
 
 function insertToDb(jsn,name){
 	//console.log("Trying");
-	var function_deferred = Q.defer();
 	var deferred = Q.defer();
 	db.get(name,function(error,body){
 		if(!error){
 			jsn._rev = body._rev;
-			//console.log(body._rev);
 		}
-		//console.log(JSON.stringify(jsn));
 		db.insert(jsn,name,function(err,body){
 			if(err)
 				console.log("Conflict");
@@ -653,13 +652,14 @@ function insertToDb(jsn,name){
 			deferred.resolve(err);
 		});
 	});
-	deferred.promise.then(function(error){
+	var ret = deferred.promise.then(function(error){
 		if(error)
-			insertToDb(jsn,name);
-		else
-			function_deferred.resolve(true);
+			return insertToDb(jsn,name);
+		else{
+			return Q(true);
+		}	
 	});
-	return function_deferred.promise;
+	return ret;
 };
 
 
