@@ -54,7 +54,12 @@ function checkBasicAuthentication(req){
 			var body =  JSON.parse(response.body);
 			var check = body.status;
 
-			deferred.resolve(body);
+			if(check){
+				deferred.resolve(JSON.stringify({"username":username,"password":password,"status":true}));
+			}
+			else{
+				deferred.resolve(JSON.stringify({"username":username,"status":false,"error":body.error}));
+			}
 		});
 	}
 	return deferred.promise;

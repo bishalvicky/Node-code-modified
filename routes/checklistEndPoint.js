@@ -2,8 +2,6 @@ var express = require('express');
 var router = express.Router();
 var Q = require('q');
 
-var username = "skjindal93";
-var password = "hehe";
 
 router.use(function log(req, res, next){
   next();
@@ -60,134 +58,149 @@ function getChecklists(checklistIndex, region, asset){
 
 router.get('/', function(req, res){
 	
+functions.checkBasicAuthentication(req).then(function(data){
+		var authData = JSON.parse(data);
+		if (authData.status){
+			username = authData.username;
+			password = authData.password;
+			var promises = [];
 
-	var promises = [];
+			var deferredData = Q.defer();
+			db.get("data", function(err, body){
+				console.log(body.assets);
+				trueAssets = body.assets.slice();
+				trueRegions = body.regions.slice();
+				regions = body.regions;
+				assets = body.assets;
+				deferredData.resolve(true);
+				console.log(regions);
+			});
+			
 
-	var deferredData = Q.defer();
-	db.get("data", function(err, body){
-		console.log(body.assets);
-		trueAssets = body.assets.slice();
-		trueRegions = body.regions.slice();
-		regions = body.regions;
-		assets = body.assets;
-		deferredData.resolve(true);
-		console.log(regions);
-	});
-	
+			promises.push(deferredData.promise);
 
-	promises.push(deferredData.promise);
+			var deferredUser = Q.defer();
 
-	var deferredUser = Q.defer();
+			var arg1 = false;
+			var arg2 = false;
+			var arg3 = false;
+				
+			if (req.query.checklist)
+				arg1 = parseInt(req.query.checklist.split('_')[1]);
+			else if (req.query.region)
+				arg2 = req.query.region;
+			else if (req.query.asset){
+				arg3 = req.query.asset;
+			}
 
-	var arg1 = false;
-	var arg2 = false;
-	var arg3 = false;
-		
-	if (req.query.checklist)
-		arg1 = parseInt(req.query.checklist.split('_')[1]);
-	else if (req.query.region)
-		arg2 = req.query.region;
-	else if (req.query.asset){
-		arg3 = req.query.asset;
-	}
+			getChecklists(arg1, arg2, arg3).then(function(data){
+				checklists = data;
+				deferredUser.resolve(true);
+			});
 
-	getChecklists(arg1, arg2, arg3).then(function(data){
-		checklists = data;
-		deferredUser.resolve(true);
-	});
+			promises.push(deferredUser.promise);
 
-	promises.push(deferredUser.promise);
+			
+			Q.all(promises).then(function(d){
+				var checklistAssets = [];
+				for (var i = 0; i < checklistsUsername.length; i++){
+					checklistAssets = checklistAssets.concat(checklistsUsername[i].assets);
+				}
 
-	
-	Q.all(promises).then(function(d){
-		var checklistAssets = [];
-		for (var i = 0; i < checklistsUsername.length; i++){
-			checklistAssets = checklistAssets.concat(checklistsUsername[i].assets);
+				assets = assets.filter(function (el){
+					return checklistAssets.indexOf(el) < 0;
+				});
+
+				var data = {
+					"regions": regions,
+					"assets": assets,
+					"trueAssets": trueAssets,
+					"trueRegions": trueRegions,
+					"checklists": checklists
+				};
+
+				res.send(data);
+			});
 		}
-
-		assets = assets.filter(function (el){
-			return checklistAssets.indexOf(el) < 0;
-		});
-
-		var data = {
-			"regions": regions,
-			"assets": assets,
-			"trueAssets": trueAssets,
-			"trueRegions": trueRegions,
-			"checklists": checklists
-		};
-
-		res.send(data);
 	});
 });
 
 router.post('/', function(req, res){
-	var data = req.body.data;
+	
+	functions.checkBasicAuthentication(req).then(function(data){
+		var authData = JSON.parse(data);
+		if (authData.status){
+			username = authData.username;
+			password = authData.password;
 
-	var promises = [];
+			var data = req.body.data;
 
-	data.checklists.forEach(function(item, index){
-		data.checklists[index] = JSON.parse(item);
-		data.checklists[index].regions = data.checklists[index].regions.getUnique();
-	});
+			var promises = [];
 
-	data.checklists = data.checklists.filter(function(el){
-		return (el.assets.length!==0 && el.regions.length!==0);
-	});
-
-	checklists = data.checklists;
-
-	var deferredData = Q.defer();
-	db.get("data", function(err, body){
-		trueAssets = body.assets.splice();
-		trueRegions = body.regions.splice();
-		regions = body.regions;
-		assets = body.assets;
-		deferredData.resolve(true);
-	});
-
-	promises.push(deferredData.promise);
-
-	var deferredUser = Q.defer();
-	db.get(username, function(err, body){
-		rev = body._rev;
-		deferredUser.resolve(true);
-	});
-
-	promises.push(deferredUser.promise);
-
-	Q.all(promises).then(function(d){
-		var json = {
-			"_rev": rev,
-			"password": password,
-			"checklists": checklists
-		};
-
-		db.insert(json, username, function(err, body, header){
-			if (err){
-				console.log(err);
-			}
-
-			var checklistAssets = [];
-
-			for (var i = 0; i < checklists.length; i++){
-				checklistAssets = checklistAssets.concat(checklists[i].assets);
-			}
-
-			assets = assets.filter(function (el){
-				return checklistAssets.indexOf(el) < 0;
+			data.checklists.forEach(function(item, index){
+				data.checklists[index] = JSON.parse(item);
+				data.checklists[index].regions = data.checklists[index].regions.getUnique();
 			});
 
-			var data = {
-				"regions": regions,
-				"assets": assets,
-				"trueAssets": trueAssets,
-				"trueRegions": trueRegions,
-				"checklists": checklists
-			};
+			data.checklists = data.checklists.filter(function(el){
+				return (el.assets.length!==0 && el.regions.length!==0);
+			});
 
-			res.send(data);
-		});
+			checklists = data.checklists;
+
+			var deferredData = Q.defer();
+			db.get("data", function(err, body){
+				trueAssets = body.assets.splice();
+				trueRegions = body.regions.splice();
+				regions = body.regions;
+				assets = body.assets;
+				deferredData.resolve(true);
+			});
+
+			promises.push(deferredData.promise);
+
+			var deferredUser = Q.defer();
+			db.get(username, function(err, body){
+				rev = body._rev;
+				deferredUser.resolve(true);
+			});
+
+			promises.push(deferredUser.promise);
+
+			Q.all(promises).then(function(d){
+				var json = {
+					"_rev": rev,
+					"password": password,
+					"checklists": checklists
+				};
+
+				db.insert(json, username, function(err, body, header){
+					if (err){
+						console.log(err);
+					}
+
+					var checklistAssets = [];
+
+					for (var i = 0; i < checklists.length; i++){
+						checklistAssets = checklistAssets.concat(checklists[i].assets);
+					}
+
+					assets = assets.filter(function (el){
+						return checklistAssets.indexOf(el) < 0;
+					});
+
+					var data = {
+						"regions": regions,
+						"assets": assets,
+						"trueAssets": trueAssets,
+						"trueRegions": trueRegions,
+						"checklists": checklists
+					};
+
+					res.send(data);
+				});
+			});
+		}
 	});
 });
 

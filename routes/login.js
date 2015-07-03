@@ -36,6 +36,7 @@ router.post('/', function(req, res){
 
 		if(check){
 			session_data.username = req.body.username;
+			session_data.password = req.body.password;
 			req.session.save();
 			res.redirect('checklist');
 		}
