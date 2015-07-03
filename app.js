@@ -70,6 +70,7 @@ var logout = require('./routes/logout');
 
 var register = require('./routes/register');
 var login = require('./routes/login');
+var logincheck = require('./routes/logincheck');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
@@ -95,6 +96,7 @@ app.use('/setup', setup);
 app.use('/checklist', checklist);
 app.use('/register',register);
 app.use('/login',login);
+app.use('/logincheck',logincheck);
 app.use('/addChecklist', addChecklist);
 app.use('/checklistEndPoint',checklistEndPoint);
 app.use('/logout',logout)
@@ -134,8 +136,8 @@ function initDBConnection() {
 			dbCredentials.user = "f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix";
 			dbCredentials.password = "f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6";
 			dbCredentials.url = "https://f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix:f6fe0f1a13a6c758ca4d45b4ef2b41ec9e329f04199635762f6db15e16803fc6@f0549f34-78ea-44d4-9abe-efd87b2286d3-bluemix.cloudant.com";
-	  	user = "a-jq3b5v-nyywcig5q2";
-			pass = "vAlx3YAaFY2xJ!8*Gf";
+	  	user = "a-rgecs9-wssdsn55el";
+			pass = "6vCRrc9UaFE?kwO@Z3";
 			org = "rgecs9";
 	  }
 
@@ -152,21 +154,21 @@ initDBConnection();
 
 
 function assetListFromGateway(gateway){
+
 	var deferred = Q.defer();
 	var options = {
-	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gateway+'?top=1',
+	  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/Pi/'+gateway+'?top=1',
 	  headers: {
 	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
 	  }
 	}
-
+	
 	request(options, function(error, response, html){
 		var json = JSON.parse(html);
 
 		if(!json.error){
 			var json = JSON.parse(html);
 			var data = json[0].evt;
-			
 			var assets = data.assets.split(" , ");
 			var latitude = data.latitude;
 			var longitude = data.longitude;
@@ -176,37 +178,16 @@ function assetListFromGateway(gateway){
 				"type": "Point",
 				"coordinates": [latitude, longitude, altitude],
 				"assets": assets
-			}
-
-			db.get(gateway, function(err, body) {
-
-			  	if (!err){
-						json_point._rev = body._rev;
-						db.insert(json_point,gateway,function(err,body){
-							if(!err)
-								console.log('Updated Doc: ' + gateway);
-							else{
-
-								console.log("Gateway Update Error: " + err + "______"+gateway);
-							}
-							deferred.resolve(true);
-						});
-		  		}
-
-			  	else {
-		  			db.insert(json_point,gateway,function(err,body){
-							if(!err)
-								console.log('Updated Doc: ' + gateway);
-							else
-								console.log("Gateway Update Error: " + gateway);
-							deferred.resolve(true);
-						});
-		  		}
-			});	
+			};
+			//console.log(options.url + "hehehehehehhehehehe"+JSON.stringify(json_point));
+			insertToDb(json_point,gateway).then(function(){
+				//console.log(json_point);
+				deferred.resolve(true);
+			});
 		}
 		else{
 			deferred.resolve(false);
-			console.log("URL ERROR!!!")
+			console.log("URL ERROR!!!");
 		}
 			
 	});
@@ -275,6 +256,7 @@ function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
 				assetsPresent[assetIndex] = true;
 				message_alert = asset+": Now present in "+gateways[gatewayIndex];
 				addToTraceAndNotify(asset, gateway, message_alert).then(function(){
+					console.log("Here!!!");
 					deferredGateway.resolve(true);
 				});
 			}	
@@ -341,6 +323,7 @@ function checkCheckList(checklist){
 			db.get(asset, function(err, bodyAsset){
 				if (bodyAsset.type !== "gps"){
 					checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex).then(function(){
+						
 						deferred_asset.resolve(true);
 					});
 				}
@@ -374,7 +357,7 @@ function checkCheckList(checklist){
 								});
 							}
 							else{
-								checkInOtherRegions(assets[assetBooleanIndex],checklist.regions).then(function(){
+								checkInOtherRegionsNonGPS(assets[assetBooleanIndex],checklist.regions).then(function(){
 									promiseCheckInOtherRegions.resolve(true);
 								});
 							}
@@ -399,7 +382,7 @@ function checkCheckList(checklist){
 }
 
 
-function checkInOtherRegions(asset,checkedRegions){
+function checkInOtherRegionsNonGPS(asset,checkedRegions){
 	var found = 0;
 	var deferred = Q.defer();
 	var message_alert;
@@ -419,6 +402,7 @@ function checkInOtherRegions(asset,checkedRegions){
 
 					//get all gateways in that region
 					var gatewaysInRegion = body.gateways;
+				
 					
 					var promiseRegion = function(){
 						var promisesGateways = [];
@@ -437,6 +421,7 @@ function checkInOtherRegions(asset,checkedRegions){
 									message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
 									console.log(message_alert);
 									addToTraceAndNotify(asset,gatewayInRegion,message_alert).then(function(){
+										console.log("XXXXX");
 										deferredGateway.resolve(true);
 									});
 								}
@@ -464,6 +449,7 @@ function checkInOtherRegions(asset,checkedRegions){
 				message_alert = "Missing Asset: "+asset+ " Not found anywhere!!";
 				console.log(message_alert);
 				addToTraceAndNotify(asset,"Missing",message_alert).then(function(){
+					
 					deferred.resolve(true);
 				});
 			}
@@ -547,6 +533,7 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 		};
 		//console.log(body.trace, body.trace.length);
 		var exactly = false;
+
 		if (body.trace.length === 0){
 			exactly = true;
 		}
@@ -567,7 +554,8 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 				console.log("Failed to send notification to all devices.");
 				console.log(err);
 			});	
-			db.insert(asset_json, asset, function(err, body, header) {
+			
+			insertToDb(asset_json, asset).then(function(){
 				deferred.resolve(true);
 			});
 		}
@@ -577,112 +565,116 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 
 
 
-function main(){
+function userCheckLists(username){
 	console.log("\n\nMain:\n");
-	var deferredMain = Q.defer();
-	//Get the name of the logged in user from session
-	var username = "skjindal93";
-	var password = "hehe"; //Password filled by user
-	var ERROR = false; 
-	
+	var deferredUser = Q.defer();
+	var ERROR = false;
 
 	db.get(username, function(err, bodyUsername){
-		//Check password
-		if (password === bodyUsername.password){
-			//Authenticated
-			
-			db.get("data", function(err, body){
-				globalRegions = body.regions;
-				var promisesX = [];
-				var promisesChecklist = [];
-				var gateways = body.gateways;
-				//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
-				gateways.forEach(function (gateway, gatewayIndex){
-					var deferredPromise = Q.defer();
-					//console.log("Gateways Started");
-					assetListFromGateway(gateway).then(function(data){
-						if(!data)
-							ERROR = true;
-						deferredPromise.resolve(true);
-					});
-					promisesX.push(deferredPromise.promise);
+		db.get("data", function(err, body){
+			globalRegions = body.regions;
+			var promisesX = [];
+			var promisesChecklist = [];
+			var gateways = body.gateways;
+			//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
+			gateways.forEach(function (gateway, gatewayIndex){
+				var deferredPromise = Q.defer();
+				//console.log("Gateways Started");
+				assetListFromGateway(gateway).then(function(data){
+					if(!data)
+						ERROR = true;
+					deferredPromise.resolve(true);
 				});
-
-				var checklists = bodyUsername.checklists;
-
-				Q.all(promisesX).then(function(data){
-					
-					if(!ERROR){
-						console.log("Checklist Started:");
-						var promisesChecklists = [];
-						checklists.forEach(function(checklist,checklistIndex){
-							var promisecheckChecklist = Q.defer();
-							checkCheckList(checklist).then(function(){
-								promisecheckChecklist.resolve(true);
-							});
-							promisesChecklists.push(promisecheckChecklist.promise);
-						});
-						Q.all(promisesChecklists).then(function(){
-							//console.log("Length: "+promisesChecklists.length);
-							//callback();
-							deferredMain.resolve("Main Done");
-							console.log("Main Done!!");
-						});
-					}
-					else{
-						deferredMain.resolve("Main Done");
-						console.log("Main Done with error!!");
-					}
-					
-				});
-
+				promisesX.push(deferredPromise.promise);
 			});
-		}
+
+			var checklists = bodyUsername.checklists;
+
+			Q.all(promisesX).then(function(data){
+				
+				if(!ERROR){
+					console.log("Checklist Started:");
+					var promisesChecklists = [];
+					checklists.forEach(function(checklist,checklistIndex){
+						var promisecheckChecklist = Q.defer();
+						checkCheckList(checklist).then(function(){
+							promisecheckChecklist.resolve(true);
+						});
+						promisesChecklists.push(promisecheckChecklist.promise);
+					});
+					Q.all(promisesChecklists).then(function(){
+						//console.log("Length: "+promisesChecklists.length);
+						//callback();
+						deferredUser.resolve("Main Done");
+						console.log("Main Done!!");
+					});
+				}
+				else{
+					deferredUser.resolve("Main Done");
+					console.log("Main Done with error!!");
+				}
+				
+			});
+
+		});
+
 	});
-	deferredMain.promise.then(function(){
-		main();
+	deferredUser.promise.then(function(){
+		userCheckLists(username);
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
-	main();
+	userCheckLists("skjindal93");
 }
 
 var jsn = {
 	"Num": 5
 };
 
+//Posetively insert data
+
 function insertToDb(jsn,name){
-	console.log("Trying");
+	//console.log("Trying");
 	var function_deferred = Q.defer();
-	var deffered = Q.defer();
+	var deferred = Q.defer();
 	db.get(name,function(error,body){
-		jsn._rev = body._rev;
+		if(!error){
+			jsn._rev = body._rev;
+			//console.log(body._rev);
+		}
+		//console.log(JSON.stringify(jsn));
 		db.insert(jsn,name,function(err,body){
-		
-		if(err)
-			console.log("Conflict");
-		else
-			console.log("Inserted");
-			deffered.resolve(err);
+			if(err)
+				console.log("Conflict");
+			else
+				console.log("Inserted");
+			deferred.resolve(err);
 		});
 	});
-
-	deffered.promise.then(function(error){
+	deferred.promise.then(function(error){
 		if(error)
 			insertToDb(jsn,name);
 		else
 			function_deferred.resolve(true);
 	});
+	return function_deferred.promise;
+};
 
-	function_deferred.promise.then(function(){
-		insertToDb(jsn,name);	
-	});
-}
-insertToDb(jsn,"test");	
+
+// var jsn = {
+// 	"Num": 5
+// };
+// insertToDb(jsn,"test2");
+
+
+		
+ //var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
+
 
 //var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
+
 // console.log(a);
 
 

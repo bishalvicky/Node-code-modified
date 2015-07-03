@@ -41,7 +41,7 @@ router.get('/', function(req, res){
 					console.log("getTrace");
 					var deferred = Q.defer();
 					var options = {
-					  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gatewayName+'?start='+startTime+'&end='+endTime,
+					  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/Pi/'+gatewayName+'?start='+startTime+'&end='+endTime,
 					  headers: {
 					  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64'),
 					  	'cursorId': cursorId,
@@ -75,7 +75,7 @@ router.get('/', function(req, res){
 				}
 
 				var options = {
-				  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/JavaDevice/'+gatewayName+'?start='+startTime+'&end='+endTime,
+				  url: 'https://'+org+'.internetofthings.ibmcloud.com/api/v0001/historian/Pi/'+gatewayName+'?start='+startTime+'&end='+endTime,
 				  headers: {
 				  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
 				  }
