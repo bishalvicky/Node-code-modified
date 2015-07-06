@@ -21,7 +21,7 @@ router.post('/', function(req, res){
 	if (req.body.password === req.body.confirm_password){
 		var user_json = {
 			"password": req.body.password,
-			"checklist": []
+			"checklists": []
 		}
 		
 		db.get("data", function(err,body){
@@ -44,9 +44,9 @@ router.post('/', function(req, res){
 				  "users": [username]
 				};
 				
-			  db.insert(data_json, "data",function(err,body){
+			  db.insert(data_json, "data", function(err,body){
 					console.log("Data Created");
-					db.insert(user_json, username,function(err,body){
+					db.insert(user_json, username, function(err,body){
 						console.log("Inserted")
 					});
 				});

@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var request = require('request');
 //var session_data;
 
 router.use(function log(req, res, next){
@@ -24,37 +25,27 @@ router.get('/', function(req, res){
 router.post('/', function(req, res){
 
 	session_data = req.session;
-	console.log(session_data);
-	var username = req.body.username;
-	var password = req.body.password;
-	db.get(username, function(err, body){
-		//Check password
-		if(!err){
-			if (password === body.password){
-				
-				session_data.username = username;
-				console.log(req.session);
-				req.session.save();
-				res.redirect('checklist');		
+	var options = {
+		url: req.protocol + '://' + req.get('host') + '/logincheck', 
+		form: {data:req.body}
+	};
 
+	request.post(options, function(request, response){
+		var body =  JSON.parse(response.body);
+		var check = body.status;
 
-			}
-			else{
-				res.render('login',{
-					error: "Username and password missmatch!"
-				});
-			}
+		if(check){
+			session_data.username = req.body.username;
+			session_data.password = req.body.password;
+			req.session.save();
+			res.redirect('checklist');
 		}
 		else{
 			res.render('login',{
-				error: "User doesn't exist!"
+				error: body.error
 			});
 		}
 	});
-
-	
-	
-
 });
 
 

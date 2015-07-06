@@ -33,6 +33,12 @@ router.get('/', function(req, res){
 	if(session_data.username){
 		console.log(req.query);
 		var url = req.protocol + '://' + req.get('host') + '/checklistEndPoint';
+		var options = {
+		  url: url,
+		  headers: {
+		  	'Authorization': 'Basic ' + new Buffer(session_data.username + ':' + session_data.password).toString('base64')
+		  }
+		}
 		var trace = null;
 
 		if (req.query.alll)
@@ -46,7 +52,7 @@ router.get('/', function(req, res){
 		}
 		console.log(url);
 
-		request(url, function(error, response, html){
+		request(options, function(error, response, html){
 			if (req.query.asset){
 				getAssetLocation(req.query.asset).then(function(data){
 					trace = data;
@@ -71,26 +77,28 @@ router.get('/', function(req, res){
 	}
 	else
 		res.redirect('login');
-	
-	/*res.render('checklist',{
-		title: "Checklist",
-		content: {"hello":"hello"}
-	});*/
 });
 
 router.post('/', function(req, res){
-	var options = {
-		url: req.protocol + '://' + req.get('host') + '/checklistEndPoint', 
-		form: {data:req.body}
-	};
+	if (session_data.username){
+		var options = {
+			url: req.protocol + '://' + req.get('host') + '/checklistEndPoint', 
+			form: {data:req.body},
+			headers: {
+		  	'Authorization': 'Basic ' + new Buffer(session_data.username + ':' + session_data.password).toString('base64')
+		  }
+		};
 
-	request.post(options, function(request, response){
-		res.render('checklist',{
-			title: "Checklist",
-			content: response.body,
-			trace: ''
+		request.post(options, function(request, response){
+			res.render('checklist',{
+				title: "Checklist",
+				content: response.body,
+				trace: ''
+			});
 		});
-	});
+	}
+	else
+		res.redirect('login');
 });
 
 module.exports = router;
