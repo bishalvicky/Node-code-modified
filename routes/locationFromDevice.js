@@ -157,7 +157,7 @@ router.get('/', function(req, res){
 				console.log("Asset is not GPS");
 
 				var assetTrace = body.trace;
-				console.log("Fetching trace: "+ assetTrace);
+				console.log("Fetching trace: "+ JSON.stringify(assetTrace));
 				var promises = [];
 				assetTrace.forEach(function(item, i){
 
