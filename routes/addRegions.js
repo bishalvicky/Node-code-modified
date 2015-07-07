@@ -45,7 +45,7 @@ router.post('/', function(req, res){
       }
 
       else{
-        gatewayList = ["error aa gya"];
+        gatewayList = ["No gateway exists"];
 
       }
 
@@ -69,7 +69,7 @@ router.post('/', function(req, res){
 function enterRegionsIntoData(enteredInfo){
   var alldata;
 
-  var regName = enteredInfo.regionName;
+  var regId = enteredInfo.regionId;
 
   db.get("data", function(err, body){
     alldata = body;
@@ -79,9 +79,9 @@ function enterRegionsIntoData(enteredInfo){
       console.log("data exists");
       var regionList = alldata.regions;
 
-      if(regionList.indexOf(regName) < 0){ // data does not already contain this region
+      if(regionList.indexOf(regId) < 0){ // data does not already contain this region
         console.log("region does not exist in data");
-        var regionList = regionList.concat(regName);
+        var regionList = regionList.concat(regId);
         var json = {"assets": alldata.assets, 
                     "gateways": alldata.gateways,
                     "regions": regionList,
@@ -105,7 +105,7 @@ function enterRegionsIntoData(enteredInfo){
       console.log("data file not exists");
       var json = {"assets": "", 
                   "gateways": "",
-                  "regions": regName,
+                  "regions": regId,
                   "users": ""
                   };
 

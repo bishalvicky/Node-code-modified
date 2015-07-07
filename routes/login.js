@@ -27,7 +27,7 @@ router.post('/', function(req, res){
 	session_data = req.session;
 	var options = {
 		url: req.protocol + '://' + req.get('host') + '/logincheck', 
-		form: {"username":req.body.username, "password": req.body.password}
+		form: {"username":req.body.username, "password":req.body.password}
 	};
 
 	request.post(options, function(request, response){
