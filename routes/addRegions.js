@@ -45,7 +45,7 @@ router.post('/', function(req, res){
       }
 
       else{
-        gatewayList = ["No gateway exists"];
+        gatewayList = "";
 
       }
 
