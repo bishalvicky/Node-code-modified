@@ -79,7 +79,7 @@ function enterAssetsIntoData(enteredInfo){
 
 };
 
-function createAssetDoc(enteredInfo){
+function createAssetDoc(enteredInfo, res){
   var assetName = enteredInfo.assetName;
   var assetId = enteredInfo.assetId;
   var assetType = enteredInfo.assetType;
