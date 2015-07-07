@@ -24,13 +24,14 @@ router.post('/', function(req, res){
 				res.send({"status":true});
 			}
 			else{
-				res.send({"status":false,"error":"Username-Password mismatch!"});
+				res.send({"status":false,"error":"Username-Password mismatch!","error_code":1});
 			}
 		}
 		else{
 			var data = {
 				"status":false,
-				"error":"User doesn't exist!"
+				"error":"User doesn't exist!",
+				"error_code":2
 			};
 			res.send((data));
 		}
