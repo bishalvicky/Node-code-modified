@@ -36,10 +36,32 @@ router.post('/', function(req, res){
   console.log("got a post request");
   console.log("android APPPP: "+JSON.stringify(req.body));
 
-  enterRegionsIntoData(req.body);
+  if(typeof req.body.regionName === "undefined"){ //list of gateways is requested 
+    var gatewayList;
 
-  createRegionDoc(req.body);
-  
+    db.get("data", function(err, body){
+      if(!err){
+        gatewayList = body.gateways;
+      }
+
+      else{
+        gatewayList = ["error aa gya"];
+
+      }
+
+      res.send(gatewayList);
+
+      console.log("gateList sent: "+gatewayList);
+    });
+  }
+
+  else{ // new region being registered
+
+    enterRegionsIntoData(req.body);
+
+    createRegionDoc(req.body);
+  }
+ 
 
 });
 
@@ -139,16 +161,18 @@ function enterRegionsIntoData(enteredInfo){
 
 function createRegionDoc(enteredInfo){
   var regionName = enteredInfo.regionName;
+  var regionId = enteredInfo.regionId;
   var gatewayList = enteredInfo.gateways;
 
-  console.log(gatewayList);
-
-  db.get(enteredInfo.regionName, function(err, body){
+  console.log(gatewayList)
+;
+  db.get(enteredInfo.regionId, function(err, body){
     var json;
 
     if(!err){ // region already exists
-      console.log(enteredInfo.regionName + " region exists")
-      json = {"type": "Polygon",
+      console.log(enteredInfo.regionId + " region exists")
+      json = {"name": enteredInfo.regionName,
+              "type": "Polygon",
               "coordinates": enteredInfo.points,
               "altitudeLow": enteredInfo.altLow,
               "altitudeHigh": enteredInfo.altHigh,
@@ -159,9 +183,10 @@ function createRegionDoc(enteredInfo){
     }
 
     else{ // new region
-      console.log(enteredInfo.regionName + " new region")
+      console.log(enteredInfo.regionId + " new region")
 
-      json = {"type": "Polygon",
+      json = {"name": enteredInfo.regionName,
+              "type": "Polygon",
               "coordinates": enteredInfo.points,
               "altitudeLow": enteredInfo.altLow,
               "altitudeHigh": enteredInfo.altHigh,
@@ -170,8 +195,8 @@ function createRegionDoc(enteredInfo){
 
     }
 
-    db.insert(json, enteredInfo.regionName, function(err, body, header){
-      if(!err) console.log(enteredInfo.regionName + " inserted");
+    db.insert(json, enteredInfo.regionId, function(err, body, header){
+      if(!err) console.log(enteredInfo.regionId + " inserted");
     });
 
   });

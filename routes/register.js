@@ -21,7 +21,7 @@ router.post('/', function(req, res){
 	if (req.body.password === req.body.confirm_password){
 		var user_json = {
 			"password": req.body.password,
-			"checklist": []
+			"checklists": []
 		}
 		
 		db.get("data", function(err,body){

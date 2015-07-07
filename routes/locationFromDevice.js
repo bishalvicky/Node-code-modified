@@ -27,6 +27,8 @@ router.get('/', function(req, res){
 		}
 		else{
 
+			console.log("Asset is type GPS");
+
 			if(body.type === "gps"){
 				var gatewayName = assetName.split("_");
 				gatewayName = "gateway_" + gatewayName[1];
@@ -127,8 +129,10 @@ router.get('/', function(req, res){
 
 			else{
 
+				console.log("Asset is not GPS");
+
 				var assetTrace = body.trace;
-				console.log("Fetching trace: "+ assetTrace);
+				console.log("Fetching trace: "+ JSON.stringify(assetTrace));
 				var promises = [];
 				assetTrace.forEach(function(item, i){
 
