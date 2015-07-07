@@ -15,8 +15,8 @@ router.post('/', function(req, res){
 
 	console.log(req.body);
 
-	var username = req.body.data.username;
-	var password = req.body.data.password;
+	var username = req.body.username;
+	var password = req.body.password;
 	db.get(username, function(err, body){
 		//Check password
 		if(!err){
