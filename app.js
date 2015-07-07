@@ -169,34 +169,40 @@ function assetListFromGateway(gateway){
 	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64') 
 	  }
 	}
-	
-	request(options, function(error, response, html){
-		var json = JSON.parse(html);
 
-		if(!json.error){
-			var json = JSON.parse(html);
-			var data = json[0].evt;
-			var assets = data.assets.split(" , ");
-			var latitude = data.latitude;
-			var longitude = data.longitude;
-			var altitude = data.altitude;
-
-			var json_point = {
-				"type": "Point",
-				"coordinates": [latitude, longitude, altitude],
-				"assets": assets
-			};
-			//console.log(options.url + "hehehehehehhehehehe"+JSON.stringify(json_point));
-			insertToDb(json_point,gateway).then(function(){
-				//console.log(json_point);
-				deferred.resolve(true);
-			});
+	db.get(gateway,function(err,body){
+		if(!err){
+			var json_point = body;
 		}
 		else{
-			deferred.resolve(false);
-			console.log("URL ERROR!!!");
+			var json_point = {
+				"type": "Point",
+				"coordinates": [0, 0, 0],
+				"assets": []
+			};
 		}
-			
+		request(options, function(error, response, html){
+			var json = JSON.parse(html);
+
+			if(!json.error){
+				//var json = JSON.parse(html);
+				var data = json[0].evt;
+				var assets = data.assets.split(" , ");
+				var latitude = data.latitude;
+				var longitude = data.longitude;
+				var altitude = data.altitude;
+
+				json_point = {
+					"type": "Point",
+					"coordinates": [latitude, longitude, altitude],
+					"assets": assets
+				};	
+			}
+			insertToDb(json_point,gateway).then(function(){
+				deferred.resolve(true);
+			});
+				
+		});
 	});
 	return deferred.promise;
 }
@@ -221,6 +227,11 @@ function listOfGatewaysAndRegions(checklist){
 		//append gateways in the given regions
 		db.get(item,function(err, body){
 			//console.log("Adding Region:" + item);
+
+			/**************************************
+			***************ERROR CHECK*************
+			***************************************/
+
 			gateways = gateways.concat(body.gateways);
 			// console.log("HERE----" + item.coordinates);
 			var region_json = {
@@ -249,30 +260,33 @@ function listOfGatewaysAndRegions(checklist){
 	return deferredBla.promise;
 }
 
-function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex){
+function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex, username){
 	var promisesGateways = [];
 	var message_alert;
 	gateways.forEach(function(gateway, gatewayIndex){
 
 		var deferredGateway = Q.defer();
 		db.get(gateway, function(err, body){
-
-			//if asset present in this gateway
-			if (body.assets.indexOf(asset) > - 1){
-				console.log(asset+" is present in "+gateways[gatewayIndex]);
-				assetsPresent[assetIndex] = true;
-				message_alert = asset+": Now present in "+gateways[gatewayIndex];
-				addToTraceAndNotify(asset, gateway, message_alert).then(function(){
-					console.log("Here!!!");
+			if(!err){
+				//if asset present in this gateway
+				if (body.assets.indexOf(asset) > - 1){
+					console.log(asset+" is present in "+gateways[gatewayIndex]);
+					assetsPresent[assetIndex] = true;
+					message_alert = asset+": Now present in "+gateways[gatewayIndex];
+					addToTraceAndNotify(asset, gateway, message_alert, username).then(function(){
+						deferredGateway.resolve(true);
+					});
+				}	
+				else {
+					//console.log("Not Found!!");
 					deferredGateway.resolve(true);
-				});
-			}	
-			else {
-				//console.log("Not Found!!");
+				}
+			}
+			else{
+				console.log("Get Error");
 				deferredGateway.resolve(true);
 			}
 		});
-
 		promisesGateways.push(deferredGateway.promise);
 	});
 	return Q.all(promisesGateways);
@@ -286,24 +300,25 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 
 	//console.log(gateway);
 	db.get(gateway, function(err, body) {
-		//console.log(JSON.stringify(body));
-
-		regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
-			var contains = geojson.pointInPolygon(body,regionPolygon);
-			if (contains){
-				assetsPresent[assetIndex] = true;
-				console.log(asset+" is present in "+regionPolygon.region)
-			}
-				
-		});
-		
+		if(!err){
+			regionPolygons.forEach(function(regionPolygon, regionPolygonIndex){
+				var contains = geojson.pointInPolygon(body,regionPolygon);
+				if (contains){
+					assetsPresent[assetIndex] = true;
+					console.log(asset+" is present in "+regionPolygon.region)
+				}
+					
+			});
+		}
+		else{
+			console.log("Get Error");
+		}
 		deferred.resolve(true);
 	});
-
 	return deferred.promise;
 }
 
-function checkCheckList(checklist){
+function checkCheckList(checklist,username){
 
 	var deferredCheckList = Q.defer();
 	var assets;
@@ -324,20 +339,23 @@ function checkCheckList(checklist){
 		//for each asset
 		//console.log(assets);
 		assets.forEach(function(asset, assetIndex){
-
 			var deferred_asset = Q.defer();
-
 			db.get(asset, function(err, bodyAsset){
-				if (bodyAsset.type !== "gps"){
-					checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex).then(function(){
-						
-						deferred_asset.resolve(true);
-					});
+				if(!err){
+					if (bodyAsset.type !== "gps"){
+						checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex, username).then(function(){							
+							deferred_asset.resolve(true);
+						});
+					}
+					else {
+						checkGPSinRegions(asset, regions, assetsPresent, assetIndex).then(function(){
+							deferred_asset.resolve(true);
+						});
+					}
 				}
-				else {
-					checkGPSinRegions(asset, regions, assetsPresent, assetIndex).then(function(){
-						deferred_asset.resolve(true);
-					});
+				else{
+					console.log("Get Error!");
+					deferred_asset.resolve(true);
 				}
 			});
 			promises.push(deferred_asset.promise);
@@ -364,12 +382,13 @@ function checkCheckList(checklist){
 								});
 							}
 							else{
-								checkInOtherRegionsNonGPS(assets[assetBooleanIndex],checklist.regions).then(function(){
+								checkInOtherRegionsNonGPS(assets[assetBooleanIndex],checklist.regions,username).then(function(){
 									promiseCheckInOtherRegions.resolve(true);
 								});
 							}
 						}
 						else{
+							console.log("Get Error!");
 							promiseCheckInOtherRegions.resolve(true);
 						}
 
@@ -389,14 +408,12 @@ function checkCheckList(checklist){
 }
 
 
-function checkInOtherRegionsNonGPS(asset,checkedRegions){
+function checkInOtherRegionsNonGPS(asset,checkedRegions, username){
 	var found = 0;
 	var deferred = Q.defer();
 	var message_alert;
 	//get all regions from data file
-	//db.get("data", function(err, body){
-		var regions = globalRegions;
-
+		var regions = globalData.regions;
 		var promises = [];
 		//for all regions
 		regions.forEach(function(region, regionIndex){
@@ -406,43 +423,45 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions){
 				// console.log("Checking for " + asset + " in "+ region);
 				//get DOC of the region
 				db.get(region, function(err, body){
+					if(!err){
+						//get all gateways in that region
+						var gatewaysInRegion = body.gateways;
+						var promiseRegion = function(){
+							var promisesGateways = [];
+							//for all gateways in that region
+							gatewaysInRegion.forEach(function(gatewayInRegion, gatewaysInRegionIndex){
 
-					//get all gateways in that region
-					var gatewaysInRegion = body.gateways;
-				
-					
-					var promiseRegion = function(){
-						var promisesGateways = [];
-						//for all gateways in that region
-						gatewaysInRegion.forEach(function(gatewayInRegion, gatewaysInRegionIndex){
+								var deferredGateway = Q.defer();
+								//get DOC of the gateway
+								db.get(gatewayInRegion, function(err, body){
+									//get all assets in that gateway
+									var assetsInGateway = body.assets;
 
-							var deferredGateway = Q.defer();
-							//get DOC of the gateway
-							db.get(gatewayInRegion, function(err, body){
-								//get all assets in that gateway
-								var assetsInGateway = body.assets;
-
-								//if given asset found in assets of that gateway
-								if(assetsInGateway.indexOf(asset) > -1){
-									found = 1;
-									message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
-									console.log(message_alert);
-									addToTraceAndNotify(asset,gatewayInRegion,message_alert).then(function(){
-										console.log("XXXXX");
+									//if given asset found in assets of that gateway
+									if(assetsInGateway.indexOf(asset) > -1){
+										found = 1;
+										message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
+										console.log(message_alert);
+										addToTraceAndNotify(asset,gatewayInRegion,message_alert, username).then(function(){
+											deferredGateway.resolve(true);
+										});
+									}
+									else {
 										deferredGateway.resolve(true);
-									});
-								}
-								else {
-									deferredGateway.resolve(true);
-								}
+									}
+								});
+								promisesGateways.push(deferredGateway.promise);
 							});
-							promisesGateways.push(deferredGateway.promise);
+							return Q.all(promisesGateways);
+						}
+						promiseRegion().then(function(){
+							deferred_found.resolve(true);
 						});
-						return Q.all(promisesGateways);
 					}
-					promiseRegion().then(function(){
+					else{
+						console.log("Get Error!");
 						deferred_found.resolve(true);
-					});
+					}
 				});
 			}
 			else
@@ -455,7 +474,7 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions){
 			if(found == 0){
 				message_alert = "Missing Asset: "+asset+ " Not found anywhere!!";
 				console.log(message_alert);
-				addToTraceAndNotify(asset,"Missing",message_alert).then(function(){
+				addToTraceAndNotify(asset,"Missing",message_alert,username).then(function(){
 					
 					deferred.resolve(true);
 				});
@@ -463,7 +482,6 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions){
 			else
 				deferred.resolve(true);
 		});
-	//});
 	return deferred.promise;
 };
 
@@ -472,7 +490,7 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 	var found = 0;
 	var tukdeAsset = asset.split("_");
 	var gateway = "gateway"+"_"+tukdeAsset[1];
-	var regions = globalRegions;
+	var regions = globalData.regions;
 	var deferred_fun = Q.defer();
 
 	db.get(gateway,function(err,body){
@@ -481,17 +499,17 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 			regions.forEach(function(region,regionIndex){
 				var deferred = Q.defer();
 				db.get(region,function(err,bodyRegion){
-					if(checkedRegions.indexOf(region)<0){
-						
-						var contains = geojson.pointInPolygon(body,bodyRegion);
-						//console.log(body.coordinates + " in " + bodyRegion.coordinates + "-" + contains);
-						if(contains){
-							found = 1;
-							console.log("Missing Asset:" + asset + " Found in region:" + region);
-							deferred.resolve(true);
-						}
+					if(!err){
+						if(checkedRegions.indexOf(region)<0){							
+							var contains = geojson.pointInPolygon(body,bodyRegion);
+							//console.log(body.coordinates + " in " + bodyRegion.coordinates + "-" + contains);
+							if(contains){
+								found = 1;
+								console.log("Missing Asset:" + asset + " Found in region:" + region);
+							}
+						}		
 					}
-					deferred.resolve(true);				
+					deferred.resolve(true);			
 				});
 				promises.push(deferred.promise);
 			});
@@ -512,60 +530,67 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 }
 
 
-function addToTraceAndNotify(asset,gateway,message_alert){
+function addToTraceAndNotify(asset,gateway,message_alert,username){
 
-	// console.log("addToTraceAndNotify");
+	var array_cId = [{"consumerId" : username}];
+	console.log(username);
 	var deferred = Q.defer();
 	db.get(asset, function(err,body){
-
-		var trace_json = {
-			"gateway" : gateway,
-			"timestamp" : Date.now()
-		};
-		
-		var arr = body.trace.slice();
-		arr.push(trace_json);
-		
-		var asset_json = { 
-			"_rev": body._rev,
-			"type" : body.type,
-			"rules" : body.rules,
-			"trace" : arr
-		};
-
-		var message = {
-			"alert": message_alert,
-			"url": "http://www.google.com"
-		};
-
-		//console.log(body.trace, body.trace.length);
-		var exactly = false;
-
-		if (body.trace.length === 0){
-			exactly = true;
-		}
-		else if (body.trace[body.trace.length-1].gateway !== gateway){
-			exactly = true;
-		}
-		else {
-			deferred.resolve(true);
-		}
-
-		if (exactly){
-			/********************************************************************
-			*******************************ALERT*********************************
-			*********************************************************************/
-			push.sendBroadcastNotification(message,null).then(function (response) {
-				console.log("Notification sent successfully to all devices.");
-			}, function(err) {
-				console.log("Failed to send notification to all devices.");
-				console.log(err);
-			});	
+		if(!err){
 			
-			insertToDb(asset_json, asset).then(function(){
+			//console.log(body.trace, body.trace.length);
+			var exactly = false;
+
+			if (body.trace.length === 0){
+				exactly = true;
+			}
+			else if (body.trace[body.trace.length-1].gateway !== gateway){
+				exactly = true;
+			}
+			else {
 				deferred.resolve(true);
-			});
+			}
+
+			if (exactly){
+
+				var trace_json = {
+					"gateway" : gateway,
+					"timestamp" : Date.now()
+				};
+				
+				var arr = body.trace.slice();
+				arr.push(trace_json);
+				
+				var asset_json = { 
+					"_rev": body._rev,
+					"type" : body.type,
+					"rules" : body.rules,
+					"trace" : arr
+				};
+
+				var message = {
+					"alert": message_alert,
+					"url": "http://www.google.com"
+				};
+
+				/********************************************************************
+				*******************************ALERT*********************************
+				*********************************************************************/
+				push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
+					console.log("Notification sent successfully to all devices.");
+				}, function(err) {
+					console.log("Failed to send notification to all devices.");
+					console.log(err);
+				});	
+				
+				insertToDb(asset_json, asset).then(function(){
+					deferred.resolve(true);
+				});
+			}
 		}
+		else{
+			deferred.resolve(true);
+		}	
 	});
 	return deferred.promise;
 };
@@ -573,67 +598,87 @@ function addToTraceAndNotify(asset,gateway,message_alert){
 
 
 function userCheckLists(username){
-	console.log("\n\nMain:\n");
+	console.log("User:");
 	var deferredUser = Q.defer();
-	var ERROR = false;
 
 	db.get(username, function(err, bodyUsername){
-		db.get("data", function(err, body){
-			globalRegions = body.regions;
-			var promisesX = [];
+
+		if(!err){
 			var promisesChecklist = [];
-			var gateways = body.gateways;
-			//var gateways = ["gateway_7cd1c39d10f0","gateway_8cd1c39d10f0","gateway_9cd1c39d10f0"];
+			var checklists = bodyUsername.checklists;
+
+			console.log("Checklist Started:");
+			var promisesChecklists = [];
+			checklists.forEach(function(checklist,checklistIndex){
+				var promisecheckChecklist = Q.defer();
+				checkCheckList(checklist,username).then(function(){
+					promisecheckChecklist.resolve(true);
+				});
+				promisesChecklists.push(promisecheckChecklist.promise);
+			});
+			Q.all(promisesChecklists).then(function(){
+				deferredUser.resolve("User Done");
+				console.log("User Done!!");
+			});	
+		}
+		else{
+			deferredUser.resolve("User Error");
+		}
+
+	});
+	return deferredUser.promise;
+};
+
+
+function loopUsers(){
+	console.log("\n\nLoop Started:\n\n");
+	var promisesLoop = [];
+	var promisesX = [];
+	var deferredFun = Q.defer();
+
+	db.get("data",function(err,body){
+		if(!err){
+			globalData = body;
+			//console.log(JSON.stringify(globalData));
+
+			var gateways = globalData.gateways;		
 			gateways.forEach(function (gateway, gatewayIndex){
 				var deferredPromise = Q.defer();
-				//console.log("Gateways Started");
 				assetListFromGateway(gateway).then(function(data){
-					if(!data)
-						ERROR = true;
 					deferredPromise.resolve(true);
 				});
 				promisesX.push(deferredPromise.promise);
 			});
 
-			var checklists = bodyUsername.checklists;
-
 			Q.all(promisesX).then(function(data){
-				
-				if(!ERROR){
-					console.log("Checklist Started:");
-					var promisesChecklists = [];
-					checklists.forEach(function(checklist,checklistIndex){
-						var promisecheckChecklist = Q.defer();
-						checkCheckList(checklist).then(function(){
-							promisecheckChecklist.resolve(true);
-						});
-						promisesChecklists.push(promisecheckChecklist.promise);
+				var listOfUsers = globalData.users;
+				listOfUsers.forEach(function(username,userIndex){
+					var deferredLoop = Q.defer();
+					userCheckLists(username).then(function(data){
+						deferredLoop.resolve(true);
 					});
-					Q.all(promisesChecklists).then(function(){
-						//console.log("Length: "+promisesChecklists.length);
-						//callback();
-						deferredUser.resolve("Main Done");
-						console.log("Main Done!!");
-					});
-				}
-				else{
-					deferredUser.resolve("Main Done");
-					console.log("Main Done with error!!");
-				}
-				
-			});
-
-		});
-
+					promisesLoop.push(deferredLoop.promise);
+				});
+				Q.all(promisesLoop).then(function(data){
+					deferredFun.resolve(true);
+				});
+			});	
+		}
+		else{
+			console.log("No User registered. " + err);
+			deferredFun.resolve(true);
+		}
+		
 	});
-	deferredUser.promise.then(function(){
-		userCheckLists(username);
+	deferredFun.promise.then(function(data){
+		console.log("\n\nLoop Done!\n\n");
+		loopUsers();
 	});
 };
 
 var debug = false;
 if (debug){
-	userCheckLists("skjindal93");
+	loopUsers();
 }
 
 var jsn = {
