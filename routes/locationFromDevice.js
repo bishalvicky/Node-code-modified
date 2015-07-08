@@ -9,10 +9,9 @@ router.use(function log(req, res, next){
 router.get('/', function(req, res){
 	session_data = req.session;
 	if(session_data.username){
-		var url = req.protocol + '://' + req.get('host') + '/locationFromDeviceEndPoint';
-		
-		var trace = null;
 
+		var url = req.protocol + '://' + req.get('host') + '/locationFromDeviceEndPoint';
+		var trace = null;
 		if (req.query.assetName){
 			url = url + '?assetName=' + req.query.assetName;
 		}
@@ -23,7 +22,7 @@ router.get('/', function(req, res){
 		  	'Authorization': 'Basic ' + new Buffer(session_data.username + ':' + session_data.password).toString('base64')
 		  }
 		}
-		
+
 		request(options, function(error, response, html){
 			response.body = JSON.parse(response.body);
 			res.render('traceMap',{

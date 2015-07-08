@@ -17,9 +17,9 @@
 					form.append(input);
 
 					var typeinput = document.createElement("input");
-                	typeinput.type = "text";
-                	typeinput.name = "type[" + type+"]";
-                	typeinput.placeholder = "type "+type;
+          	typeinput.type = "text";
+          	typeinput.name = "type[" + type+"]";
+          	typeinput.placeholder = "type "+type;
 					form.append(typeinput);
 
 					form.append(document.createElement("br"));
@@ -29,7 +29,7 @@
 		</script>
 	</head>
 	<body>
-		<form action="http://localhost:6002/addAssets" method="post" class="asset_form">
+		<form action="addAssets" method="post" class="asset_form">
 			<button type="button" id="add_asset">Add Asset</button>
 			<button type="submit">Submit</button>
 			<br>

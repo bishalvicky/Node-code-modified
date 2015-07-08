@@ -17,7 +17,7 @@ var appConfig = {
 
 ibmbluemix.initialize(appConfig);
 //var logger = ibmbluemix.getLogger();
-var push=ibmpush.initializeService();
+var push = ibmpush.initializeService();
 
 var app = express();
 var cloudant;
@@ -25,7 +25,7 @@ var bodyParser = require('body-parser')
 
 
 var dbCredentials = {
-	dbName : 'nodered'
+	dbName : 'nodeblue'
 };
 
 function checkBasicAuthentication(req){
