@@ -20,8 +20,8 @@
 		var loc_len = Math.floor(locations.length/2);
 
 		var mapOptions = {
-		zoom: 5,
-		center: new google.maps.LatLng(locations[loc_len].coordinates[0], locations[loc_len].coordinates[1])
+			zoom: 5,
+			center: new google.maps.LatLng(locations[loc_len].coordinates[0], locations[loc_len].coordinates[1])
 		};
 
 		var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
@@ -37,11 +37,11 @@
 		*/
 
 		var pinIcon = new google.maps.MarkerImage(
-		"circle.png",
-		null, /* size is determined at runtime */
-		null, /* origin is 0,0 */
-		null, /* anchor is bottom center of the scaled image */
-		new google.maps.Size(10, 10)
+			"circle.png",
+			null, /* size is determined at runtime */
+			null, /* origin is 0,0 */
+			null, /* anchor is bottom center of the scaled image */
+			new google.maps.Size(10, 10)
 		);
 
 		var traceCoordinates = [];
@@ -49,34 +49,34 @@
 
 		for (i = 0; i < locations.length; i++) {
 
-		var point = new google.maps.LatLng(locations[i].coordinates[0], locations[i].coordinates[1]);
+			var point = new google.maps.LatLng(locations[i].coordinates[0], locations[i].coordinates[1]);
 
-		traceCoordinates.push(point);
+			traceCoordinates.push(point);
 
-		marker = new google.maps.Marker({
-		  position: point,
-		  map: map,
-		  //icon: pinIcon
-		  animation: google.maps.Animation.DROP,
-		});
+			marker = new google.maps.Marker({
+			  position: point,
+			  map: map,
+			  //icon: pinIcon
+			  animation: google.maps.Animation.DROP,
+			});
 
-		marker.setMap(map);
+			marker.setMap(map);
 
-		var date = new Date(locations[i].timestamp);
-		//var hours = date.getHours();
-		//var minutes = "0" + date.getMinutes();
-		//var seconds = "0" + date.getSeconds();
-		//var formattedTime = date + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+			var date = new Date(locations[i].timestamp);
+			//var hours = date.getHours();
+			//var minutes = "0" + date.getMinutes();
+			//var seconds = "0" + date.getSeconds();
+			//var formattedTime = date + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
 
-		var index = date.toString().indexOf("(");
-		date = date.toString().substring(0, index);
+			var index = date.toString().indexOf("(");
+			date = date.toString().substring(0, index);
 
-		google.maps.event.addListener(marker, 'click', (function (marker, i) {
+			google.maps.event.addListener(marker, 'click', (function (marker, i) {
 		    return function () {
-		        infowindow.setContent(date);
-		        infowindow.open(map, marker);
+					infowindow.setContent(date);
+		    	infowindow.open(map, marker);
 		    }
-		})(marker, i));
+			})(marker, i));
 
 		}
 
@@ -107,24 +107,21 @@ function tester(){
 	//loc = JSON.parse(loc);
 
 	for(var i=0; i<loc.length; i++){
-	console.log(loc[i].coordinates[1]);
+		console.log(loc[i].coordinates[1]);
 	}
-
-	//console.log(loc);
-	console.log("tetsting");
 };
 
-
-//console.log("loc rcvd: "+loc);
-
 var loc = <%- JSON.stringify(content) %>;
+console.log(loc);
+google.maps.event.addDomListener(window, 'load', function(){ 
+	initialize(loc); 
+});
 
-google.maps.event.addDomListener(window, 'load', function(){ initialize(loc); });</script>
+</script>
 
-  </head>
-  <body>
-	
+</head>
+<body>
 
-    <div id="map-canvas"></div>
+<div id="map-canvas"></div>
   </body>
 </html>

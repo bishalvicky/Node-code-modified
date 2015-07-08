@@ -69,6 +69,7 @@ functions = {checkBasicAuthentication : checkBasicAuthentication};
 
 var insertdb = require('./routes/insertdb');
 var locationFromDevice = require('./routes/locationFromDevice');
+var locationFromDeviceEndPoint = require('./routes/locationFromDeviceEndPoint');
 var addGateways = require('./routes/addGateways');
 var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
@@ -99,6 +100,7 @@ app.use(express.static(__dirname, 'public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
 app.use('/movingGatewayTrace', movingGatewayTrace);
+app.use('/locationFromDeviceEndPoint',locationFromDeviceEndPoint);
 app.use('/addGateways',addGateways);
 app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
@@ -678,7 +680,7 @@ function loopUsers(){
 	});
 };
 
-var debug = false;
+var debug = true;
 if (debug){
 	loopUsers();
 }
