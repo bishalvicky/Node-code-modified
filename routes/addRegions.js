@@ -45,7 +45,7 @@ router.post('/', function(req, res){
       }
 
       else{
-        gatewayList = ["No gateway exists"];
+        gatewayList = "";
 
       }
 
@@ -59,7 +59,7 @@ router.post('/', function(req, res){
 
     enterRegionsIntoData(req.body);
 
-    createRegionDoc(req.body);
+    createRegionDoc(req.body, res);
   }
  
 
@@ -159,7 +159,7 @@ function enterRegionsIntoData(enteredInfo){
 
 };
 
-function createRegionDoc(enteredInfo){
+function createRegionDoc(enteredInfo, res){
   var regionName = enteredInfo.regionName;
   var regionId = enteredInfo.regionId;
   var gatewayList = enteredInfo.gateways;
@@ -196,7 +196,14 @@ function createRegionDoc(enteredInfo){
     }
 
     db.insert(json, enteredInfo.regionId, function(err, body, header){
-      if(!err) console.log(enteredInfo.regionId + " inserted");
+      if(!err) {
+        console.log(enteredInfo.regionId + " inserted");
+        res.send("true");
+      }
+
+      else{
+        res.send("false");
+      }
     });
 
   });
