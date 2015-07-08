@@ -144,9 +144,9 @@ router.get('/', function(req, res){
 							var coord = gatebody.coordinates;
 
 							var element = {
-						  	"coordinates": coord,
-						   	"timestamp": assetTrace[i].timestamp
-						  };
+										  	"coordinates": coord,
+										   	"timestamp": assetTrace[i].timestamp
+										  };
 
 							allTrace = allTrace.concat(element);
 							deferred.resolve(allTrace);

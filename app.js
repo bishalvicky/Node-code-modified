@@ -82,6 +82,7 @@ var logincheck = require('./routes/logincheck');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
+var movingGatewayTrace = require('./routes/movingGatewayTrace');
 
 
 app.set('view engine', 'ejs');
@@ -97,6 +98,7 @@ app.use(session({secret: 'baaga'}));
 app.use(express.static(__dirname, 'public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
+app.use('/movingGatewayTrace', movingGatewayTrace);
 app.use('/addGateways',addGateways);
 app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
@@ -729,11 +731,11 @@ function insertToDb(jsn,name){
 
 
 // start server on the specified port and binding host
-app.listen(appEnv.port, appEnv.bind, function() {
+/*app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
-});
-
-/*var server = app.listen(6001, '0.0.0.0', function() {
-  console.log('Listening on port %d', server.address().port);
 });*/
+
+var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
+});
