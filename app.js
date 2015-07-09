@@ -683,9 +683,10 @@ if (debug){
 	loopUsers();
 }
 
-var jsn = {
+/*var jsn = {
 	"Num": 5
 };
+*/
 
 //Posetively insert data
 
