@@ -189,7 +189,7 @@ function assetListFromGateway(gateway){
 			if(!json.error){
 				//var json = JSON.parse(html);
 				var data = json[0].evt;
-				var assets = data.assets.split(" , ");
+				var assets = data.assets;
 				var latitude = data.latitude;
 				var longitude = data.longitude;
 				var altitude = data.altitude;
