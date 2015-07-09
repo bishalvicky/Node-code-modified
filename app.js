@@ -25,7 +25,7 @@ var bodyParser = require('body-parser')
 
 
 var dbCredentials = {
-	dbName : 'nodered'
+	dbName : 'nodeblue'
 };
 
 function checkBasicAuthentication(req){
@@ -187,7 +187,8 @@ function assetListFromGateway(gateway){
 			if(!json.error){
 				//var json = JSON.parse(html);
 				var data = json[0].evt;
-				var assets = data.assets.split(" , ");
+				console.log((data.assets));
+				var assets = data.assets.split(",");
 				var latitude = data.latitude;
 				var longitude = data.longitude;
 				var altitude = data.altitude;
