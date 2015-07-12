@@ -65,6 +65,7 @@ router.get('/', function(req, res){
 								}
 								else {
 									console.log("else chal gya: " +mapInfo[0]);
+									populate(mapInfo, allTrace);
 									response.end("");
 								}
 							});
@@ -90,6 +91,9 @@ router.get('/', function(req, res){
 								console.log("cursorId undef: "+mapInfo[0]);
 								var allTrace = [];
 
+								populate(mapInfo, allTrace);
+
+/*
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
 
@@ -105,7 +109,7 @@ router.get('/', function(req, res){
 										allTrace = allTrace.concat(element);
 									}
 								}
-
+*/
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
 								if (typeof allTrace[0] === "undefined") 
@@ -167,6 +171,25 @@ router.get('/', function(req, res){
 router.post('/', function(req, res){
 
 });
+
+
+function populate(fromArray, toArray){
+	for(var k=0; k<fromArray.length; k++){
+		for(var j=0; j<fromArray[k].length; j++){
+
+			var lat = fromArray[k][j].evt.latitude;
+			var lng = fromArray[k][j].evt.longitude;
+			var alti = fromArray[k][j].evt.altitude;
+
+			var element = {
+							"coordinates": [lat, lng, alti],
+							"timestamp": fromArray[k][j].timestamp.$date
+						  };
+
+			toArray = toArray.concat(element);
+		}
+	}
+};
 
 
 module.exports = router;
