@@ -1,83 +1,467 @@
-<html>
-<head>
-<title><%= title %></title>
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+		<title>Checklist</title>
+		<link rel="stylesheet" href="public/css/bootstrap.min.css">
+		<link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="public/css/base.css">
+		<link rel="stylesheet" href="public/css/index.css">
+		<link rel="stylesheet" href="public/css/jquery-ui.css">
 
-<link rel="stylesheet" href="public/css/bootstrap.min.css">
-<link rel="stylesheet" href="public/css/bootstrap-theme.min.css">
-<link rel="stylesheet" href="public/css/normalize.css">
-<link rel="stylesheet" href="public/css/stylesheet.css">
-<link rel="stylesheet" href="public/css/selectize.default.css">
 
-<script src="public/js/jquery.js"></script>
-<script src="public/js/bootstrap.min.js"></script>
-<script src="public/js/selectize.js"></script>
-
-<script type="text/javascript">
-	$(document).ready(function(){
-		var options = <%- content %>;
-		var regionsData = [];
-		var assetsData = [];
-		for (var i = 0; i < options.regions.length; i++){
-			regionsData.push({region: options.regions[i], description: options.regions[i]});
-		}
-		for (var j = 0; j < options.assets.length; j++){
-			assetsData.push({asset: options.assets[j], description: options.assets[j]});
-		}
-
-		$('#select-regions').selectize({
-			maxItems: null,
-			valueField: 'region',
-			labelField: 'description',
-			searchField: 'region',
-			options: regionsData,
-			create: false
-		});
-
-		$('#select-assets').selectize({
-			maxItems: null,
-			valueField: 'asset',
-			labelField: 'description',
-			searchField: 'asset',
-			options: assetsData,
-			create: false
-		});
-		
-		$wrapper = $(".checklist_1");
-		var sendRegions = [];
-		var sendAssets = [];
-		$('select.selectized,input.selectized', $wrapper).each(function() {
-			var $input = $(this);
-			var update = function(e) { 
-				console.log(JSON.stringify($input.val()));
+		<link rel="stylesheet" type="text/css" href="public/css/normalize.css" />
+		<link rel="stylesheet" type="text/css" href="public/css/demo.css" />
+		<link rel="stylesheet" type="text/css" href="public/css/component.css" />
+		<script src="public/js/jquery.js"></script>
+		<script src="public/js/bootstrap.min.js"></script>
+		<script src="public/js/createChecklist.js"></script>
+		<script src="public/js/jquery-ui.js"></script>
+		<script src="public/js/modernizr.custom.js"></script>
+		<style type="text/css">
+			.container{
+				width: 100%;
+				padding: 0px;
 			}
-			$(this).on('change', update);
-			update();
-		});
-	});
-</script>
-</head>
-<body>
+			.bottom{
+				width: 100%;
+				margin-left: 1%;
+				overflow: auto;
+				margin-top: 10%;
+			}
+			.search_select{
+				text-transform: uppercase;
+				height: 100%;
+				cursor: pointer;
+				font-size: 13px;
+				letter-spacing: 1px;	
+			}
+			.plusContainer{
+				margin-top: 3%;
+			}
+		</style>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				//Check if Safari
+				var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+				if (isSafari){
+					$(".refresh p").html("REFRESH");
+					$(".refresh p").css({"font-size":"25px","font-weight":"bold"});
+				}
 
-<div class="container">
-	<form method="post" action="addChecklist">
-		<div class="panel panel-primary checklist_1">
-	  	<div class="panel-heading">
-	    	<h3 class="panel-title">Add A Checklist !</h3>
-	  	</div>
-	  	<div class="panel-body">
-	  		<div class="control-group">
-					<label for="select-regions">Regions:</label>
-					<select id="select-regions" placeholder="Pick regions..." name="regions"></select>
-				</div>
-				<div class="control-group">
-					<label for="select-assets">Assets:</label>
-					<select id="select-assets" placeholder="Pick assets..." name="assets"></select>
-				</div>
-	  	</div>
-	  </div>
-	  <input class="btn btn-default" type="submit" value="Submit">
-  </form>
-</div>
+				//POST request function
+				function post(path, params, method) {
+			    method = "post"; // Set method to post by default if not specified.
 
-</body>
+			    var form = document.createElement("form");
+			    form.setAttribute("method", method);
+			    form.setAttribute("action", path);
+
+			    for(var key in params) {
+		        if(params.hasOwnProperty(key)) {
+		          var hiddenField = document.createElement("input");
+		          hiddenField.setAttribute("type", "hidden");
+		          hiddenField.setAttribute("name", "checklists["+key+"]");
+		          hiddenField.setAttribute("value", JSON.stringify(params[key]));
+		          form.appendChild(hiddenField);
+		        }
+			    }
+
+			    document.body.appendChild(form);
+			    form.submit();
+				};
+
+				//GET request function
+				function get(path, method, key, value) {
+			    method = "get";
+
+			    var form = document.createElement("form");
+			    form.setAttribute("method", method);
+			    form.setAttribute("action", path);
+
+		      var hiddenField = document.createElement("input");
+		      hiddenField.setAttribute("type", "hidden");
+		      hiddenField.setAttribute("name", key);
+		      hiddenField.setAttribute("value", value);
+
+		      form.appendChild(hiddenField);
+
+			    document.body.appendChild(form);
+			    form.submit();
+				};
+
+				//variables
+				var data = <%- content %>;
+				var trace = <%- JSON.stringify(trace) %>;
+				var checklists = data.checklists;
+				var trueAssets = data.trueAssets;
+				var trueRegions = data.trueRegions;
+				
+				var trueChecklists = []
+				var checklistsCopy = [];
+
+
+				console.log(checklists);
+				
+				var container = $('.container');
+				var plusContainer = $('.plusContainer');
+
+				//creating checklists
+				checklists.forEach(function(checklist, index){
+					var checklistDiv = $('<div/>')
+															.addClass('checklist')
+															.attr('id','checklist'+index)
+															.insertBefore(plusContainer);
+
+					createChecklist(checklist, index, checklistDiv,'region');
+					createChecklist(checklist, index, checklistDiv,'asset');
+					trueChecklists.push("checklist_"+index);
+				});
+
+				var searchData = trueChecklists.concat(trueAssets).concat(trueRegions);
+
+				//populating search text box on top
+				
+				var formData = "";
+				$(".search").autocomplete({
+					source: searchData,
+					select: function(event, ui) {
+		        event.preventDefault();
+		        $(".search").val(ui.item.label);
+		        formData = ui.item.value;  
+			    },
+			    focus: function(event, ui) {
+			      event.preventDefault();
+			      $(".search").val(ui.item.label);
+			    }
+		    });
+
+				function showCross(){
+			    $(".checklist").mouseover(function(){
+			    	crossNo = $(this).attr("id");
+			    	$('.'+crossNo+'_cross').css('display','block');
+			    }).mouseout(function(){
+			    	
+			    	$('.'+crossNo+'_cross').css('display','none');
+			    });
+		  	};
+		  	showCross();
+
+				//Submitting the checklist
+				$(".submit").click(function(e){
+					e.preventDefault();
+					//var getValue = $(".search").val();
+					console.log(formKey);
+					var formKey = "";
+					if (formData.length === 0){
+						formKey = "alll";
+					}
+					else{
+						formKey = formData.split("_")[0];
+					}
+					//console.log(getValue);
+					get('/checklist',"get",formKey,formData);
+				});
+
+				$(".track").click(function(e){
+					e.preventDefault();
+					var getValue = $(".search").val();
+					get('/locationFromDevice',"get","assetName",getValue);
+				});
+
+				//Logging out the user
+				$(".logout").click(function(e){
+					e.preventDefault();
+					get('/logout',"get",'','');
+
+				});
+
+				//Adding checklist on add button
+				var clicks = checklists.length - 1;
+				$(".plus").click(function(){
+					clicks++;
+					var checklist = {
+						"assets": [],
+						"regions": []
+					}
+
+					var checklistDiv = $('<div/>')
+														.addClass('checklist')
+														.attr('id','checklist'+clicks)
+														.insertBefore(plusContainer);
+
+					createChecklist(checklist, clicks,checklistDiv,'region');
+					createChecklist(checklist, clicks,checklistDiv,'asset');
+					
+					checklists.push(checklist);
+
+					autocomplete();
+					update();
+					cssFloat();
+					showCross();
+				});
+
+
+				//If 1 checklist -> center, else float: left
+				function cssFloat(){
+					if (checklists.length <= 1){
+						$(".checklist").css({
+							"margin-left":"auto",
+							"margin-right":"auto"
+						});
+					}
+					else {
+						$(".checklist").css({
+							"float":"left",
+							"margin-left":"5%"
+						});
+					}
+
+				};
+				cssFloat();
+
+				//Add items to checklist
+				function addItem(ul, checklist, item, string){
+
+					var li = $('<li/>')
+									.addClass('view')
+									.attr('id',item)
+									.attr('data-checklist', checklist)
+									.attr('data-type',string)
+									.appendTo(ul);
+
+					var div = $('<div/>')
+										.addClass('view')
+										.attr('data-type',string)
+										.appendTo(li);
+
+					var cross = $('<div/>')
+								.addClass('toggle')
+								.attr('data-asset',item)
+								.attr('data-type',string)
+								.html('X')
+								.appendTo(div);
+
+					var label = $('<label/>')
+											.text(item)
+											.attr('data-type',string)
+											.appendTo(div);
+
+					
+				};
+
+				console.log(trace);
+
+				if (trace !== '')
+					$(".assetQuery").html("Present in "+trace.gateway);
+
+				//Autocompleting assets and regions fields
+				function autocomplete(){
+					$(".asset").autocomplete({
+						source: data.assets,
+						select: function (a, b) {
+							var checklistNo = parseInt(this.dataset.checklist);
+				      if (a.keyCode === 13){
+				      	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
+				      	update();
+				      	
+				      	checklists[checklistNo].assets.push(b.item.value);
+				      	data.assets = data.assets.filter(function(el){
+									return el!== b.item.value;
+								});
+								$(".asset").autocomplete({
+									source: data.assets
+								});
+				  		}
+				  		$(this).val(''); 
+				  		return false;
+				  	}
+				  });
+
+				  $(".region").autocomplete({
+						source: data.regions,
+						select: function (a, b) {
+							var checklistNo = parseInt(this.dataset.checklist);
+				      if (a.keyCode === 13){
+				      	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
+				      	update();
+				      	checklists[checklistNo].regions.push(b.item.value);
+				  		}
+				  		$(this).val(''); 
+				  		return false;
+				  	}
+				  });
+		  	};
+
+		  	autocomplete();
+
+		  	//checkboxes
+				function check(checklistNo,dataType){
+					var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+					
+					$(checklistSelector+ " .toggle").each(function(){
+						if(!($(this).hasClass("clicked"))) {
+							var parent = $(this).parent().parent();
+							parent.removeClass("view");
+							parent.addClass("completed");
+							$(this).addClass("clicked");
+						}
+						else {
+							var parent = $(this).parent().parent();
+							parent.removeClass("completed");
+							parent.addClass("view");
+							$(this).removeClass("clicked");
+						}
+					});
+				};
+
+				//checkboxes
+				function update(){
+					$(".toggle-all").click(function(){
+						
+						var checklistNo = parseInt($(this).attr('data-checklist'));
+						var dataType = $(this).attr('data-type')
+						var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+						
+						if(!($(this).hasClass("clicked"))) {
+							$(this).addClass("clicked");
+							$(checklistSelector+ " .toggle").each(function(){
+								//this.checked = true;
+								
+								check(checklistNo,"asset");
+								check(checklistNo,"region");
+							});
+
+							checklistsCopy[checklistNo] = JSON.parse(JSON.stringify(checklists[checklistNo]));
+							checklists[checklistNo].assets=[];
+							checklists[checklistNo].regions=[];
+							console.log(checklists, checklistsCopy);
+							data.assets = data.assets.concat(checklistsCopy[checklistNo].assets);
+						}
+						else {
+							$(this).removeClass("clicked");
+							$(checklistSelector+ " .toggle").each(function(){
+								//this.checked = false;
+								check(checklistNo,"asset");
+								check(checklistNo,"region");
+							});
+
+							data.assets = data.assets.filter(function(el){
+								return checklistsCopy[checklistNo].assets.indexOf(el) < 0;
+							});
+
+							checklists[checklistNo] = JSON.parse(JSON.stringify(checklistsCopy[checklistNo]));
+							console.log(checklists, checklistsCopy);
+						}
+
+						$(".asset").autocomplete({
+							source: data.assets
+						});
+
+					});
+
+					//checkboxes
+					$("#todo-list .toggle").click(function(){
+						var parent = $(this).parent().parent();
+						console.log(parent);
+						var checklistNo = parseInt(parent.attr('data-checklist'));
+						var dataType = $(this).attr('data-type');
+						console.log(dataType);
+						var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
+						
+						if(!($(this).hasClass("clicked"))) {
+							$(this).addClass("clicked");
+							var checkAll = $(checklistSelector +" .toggle:checked").length == $(checklistSelector+" .toggle").length;
+							var toggleAll = $(checklistSelector +' .toggle-all[data-checklist="'+checklistNo+'"]');
+							if (checkAll)
+								toggleAll[0].checked = true;
+							
+							parent.removeClass("view");
+							parent.addClass("completed");
+
+							if (dataType === 'asset'){
+								checklists[checklistNo].assets = checklists[checklistNo].assets.filter(function(elem){
+									return elem !== parent.attr('id');
+								});
+								data.assets.push(parent.attr('id'));
+							}
+							else if (dataType === 'region')
+								checklists[checklistNo].regions = checklists[checklistNo].regions.filter(function(elem){
+									return elem !== parent.attr('id');
+								});
+
+							console.log(checklists);
+						}
+						else {
+							$(this).removeClass("clicked");
+							var toggleAll = $(checklistSelector+ ' .toggle-all[data-checklist="'+checklistNo+'"]');
+							toggleAll[0].checked = false;
+							
+							parent.removeClass("completed");
+							parent.addClass("view");
+							
+							if (dataType === 'asset'){
+								checklists[checklistNo].assets.push(parent.attr('id'));
+
+								data.assets = data.assets.filter(function(el){
+									return el!== parent.attr('id');
+								});
+							}
+							else if (dataType === 'region')
+								checklists[checklistNo].regions.push(parent.attr('id'));
+
+							console.log(checklists);
+						}
+						$(".asset").autocomplete({
+							source: data.assets
+						});
+					});
+				};
+				update();
+
+				$(".refresh").click(function(){
+					post('/checklist',checklists);
+				});
+				
+			});
+		</script>
+	</head>
+	<body>
+		<div class="container">
+			<ul id="gn-menu" class="gn-menu-main">
+				<li class="gn-trigger">
+					<a class="gn-icon gn-icon-menu"><span>Menu</span></a>
+					<nav class="gn-menu-wrapper">
+						<div class="gn-scroller">
+							<ul class="gn-menu">
+								<li>
+									<a class="gn-icon gn-icon-plus plus"></a>
+								</li>
+								<li><a class="gn-icon gn-icon-sync refresh"></a></li>
+								<li><a class="gn-icon gn-icon-track"></a></li>
+							</ul>
+						</div><!-- /gn-scroller -->
+					</nav>
+				</li>
+				<li><a href="checklist">Track & Trace</a></li>
+				<li class="searchInput"><input placeholder="Search" class="gn-search search" type="search"></li>
+				<li class="right"><a class="logout right" href="#">Logout</a></li>
+				<li class="right"><a class="submit" href="#">Search</a></li>
+				
+			</ul>
+			<div class="bottom">
+			  <div style="clear:both;" class="empty"></div>
+			  <div class="assetQuery"></div>
+			  <div class="plusContainer">
+			  </div>
+		  </div>
+		</div><!-- /container -->
+		<script src="public/js/classie.js"></script>
+		<script src="public/js/gnmenu.js"></script>
+		<script>
+			//new gnMenu( document.getElementById( 'gn-menu' ) );
+		</script>
+	</body>
 </html>

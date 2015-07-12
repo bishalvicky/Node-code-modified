@@ -49,14 +49,16 @@ input[type="checkbox"] {
 	display: none;
 }
 .checklist{
-	margin-top: 7%;
-	width: 300px;
+	margin-top: 1%;
+	width: 350px;
 	margin-bottom: 7%;
+	background-color: #5f6f81;
+	position: relative;
 }
 #todoapp {
-	margin-bottom: 5%;
-	width: 100%;
-	border-radius: 5px;
+	margin: 0 auto;
+	margin-bottom: 3%;
+	width: 90%;
 	background: #fff;
 	position: relative;
 	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2),
@@ -81,10 +83,8 @@ input[type="checkbox"] {
 	color: #e6e6e6;
 }
 
-#todoapp h1 {
-	position: absolute;
-	top: -100px;
-	width: 100%;
+.checklist h1 {
+	width: 90%;
 	font-size: 65px;
 	font-weight: 100;
 	text-align: center;
@@ -93,26 +93,23 @@ input[type="checkbox"] {
 	-moz-text-rendering: optimizeLegibility;
 	text-rendering: optimizeLegibility;
 	color: #FFF;
+	margin: 0 auto;
 }
-#todoapp .cross{
+.checklist .cross{
 	position: absolute;
-	top: -10px;
 	right: -10px;
-	width: 20px;
-	height: 20px;
+	top: -10px;
+	background-color: black;
+	color: white;
+	border-radius: 44px;
+	width: 23px;
+	height: 23px;
 	text-align: center;
-	background-color: white;
-	font-weight: bold;
-	border-radius: 15px;
-	border: 2px solid black;
+	border: 2px solid white;
 	cursor: pointer;
-	z-index: 10;
 	display: none;
 }
-#todoapp .cross img{
-	width: 100%;
-	height: 100%;
-}
+
 #new-todo{
 	position: relative;
 	margin: 0;
@@ -130,6 +127,7 @@ input[type="checkbox"] {
 	-webkit-font-smoothing: antialiased;
 	-moz-font-smoothing: antialiased;
 	font-smoothing: antialiased;
+	color: black;
 }
 
 #new-todo {
@@ -138,6 +136,7 @@ input[type="checkbox"] {
 	background: rgba(0, 0, 0, 0.003);
 	box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
 }
+
 
 #main {
 	position: relative;
@@ -206,31 +205,25 @@ label[for='toggle-all'] {
 
 #todo-list li .toggle {
 	text-align: center;
-	width: 40px;
-	/* auto, since non-WebKit browsers doesn't support input styling */
-	height: auto;
 	position: absolute;
-	top: 0;
-	bottom: 0;
-	margin: auto 0;
-	border: none; /* Mobile Safari */
-	-webkit-appearance: none;
-	appearance: none;
-}
-
-#todo-list li .toggle:after {
-	content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -18 100 135"><circle cx="50" cy="50" r="50" fill="none" stroke="#ededed" stroke-width="3"/></svg>');
-}
-
-#todo-list li .toggle:checked:after {
-	content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="-10 -18 100 135"><circle cx="50" cy="50" r="50" fill="none" stroke="#bddad5" stroke-width="3"/><path fill="#5dc2af" d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/></svg>');
+	top: 0px;
+	bottom: 0px;
+	margin: auto 0px;
+	border: medium none;
+	font-size: 11px;
+	height: 19px;
+	width: 19px;
+	border-radius: 15px;
+	color: #FFF;
+	background-color: #000;
+	right: 20px;
+	cursor: pointer;
 }
 
 #todo-list li label {
 	white-space: pre;
 	word-break: break-word;
 	padding: 15px 60px 15px 15px;
-	margin-left: 35px;
 	display: block;
 	line-height: 1.2;
 	transition: color 0.4s;
@@ -279,7 +272,7 @@ label[for='toggle-all'] {
 #footer {
 	color: #777;
 	padding: 10px 15px;
-	height: 20px;
+	height: 40px;
 	text-align: center;
 	border-top: 1px solid #e6e6e6;
 }
@@ -406,7 +399,7 @@ html #clear-completed:active {
 		bottom: 10px;
 	}
 }
-
+/*
 .gn-menu-main,
 .gn-menu-main ul {
 		margin: 0;
@@ -463,7 +456,6 @@ html #clear-completed:active {
 	width: 60%;
 	text-align: left;
 }
-/* icon-only trigger (menu item) */
 
 .gn-menu-main li.gn-trigger {
 		position: relative;
@@ -500,11 +492,28 @@ html #clear-completed:active {
 		text-align: left;
 		font-size: 18px;
 }
+
+*/
+.gn-menu-main > li.searchInput {
+		display: block;
+		float: left;
+		height: 100%;
+		text-align: left;
+		border-right: 0px;
+}
+
+.searchInput{
+	width: 55%;
+	text-align: left;
+	
+}
+
 input.gn-search {
 		position: relative;
 		padding-left: 10px;
 		z-index: 10;
-		width: 100%;
+		height: 100%;
+		width: 99%;
 		outline: none;
 		border: none;
 		background: transparent;

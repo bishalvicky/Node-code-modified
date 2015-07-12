@@ -75,6 +75,7 @@ var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
+var addChecklist = require('./routes/addChecklist');
 var logout = require('./routes/logout');
 
 var register = require('./routes/register');
@@ -104,6 +105,7 @@ app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
+app.use('/addChecklist', addChecklist);
 app.use('/register',register);
 app.use('/login',login);
 app.use('/logincheck',logincheck);

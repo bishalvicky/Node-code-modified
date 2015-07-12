@@ -19,6 +19,21 @@ Array.prototype.getUnique = function() {
     return a;
 }
 
+function getNames(arr){
+	var promises = [];
+	var ret = [];
+	arr.forEach(function(item, i){
+		var deferred = Q.defer();
+		db.get(arr[i], function(err, body){
+			ret[i] = {};
+			ret[i].value = arr[i];
+			ret[i].label = body.name;
+			deferred.resolve(ret[i]);
+		});
+		promises.push(deferred.promise);
+	});
+	return Q.all(promises);
+}
 function getChecklists(checklistIndex, region, asset){
 	
 	var deferred = Q.defer();
@@ -66,13 +81,31 @@ functions.checkBasicAuthentication(req).then(function(data){
 			var promises = [];
 
 			var deferredData = Q.defer();
+
 			db.get("data", function(err, body){
 				console.log(body.assets);
 				trueAssets = body.assets.slice();
 				trueRegions = body.regions.slice();
+				var promises = [];
+
+				var deferredRegions = Q.defer();
+				getNames(trueRegions).then(function(data){
+					trueRegions = data;
+					deferredRegions.resolve(true);
+				});
+				promises.push(deferredRegions.promise);
+				
+				var deferredAssets = Q.defer();
+				getNames(trueAssets).then(function(data){
+					trueAssets = data;
+					deferredAssets.resolve(true);
+				});
+				promises.push(deferredAssets.promise);
 				regions = body.regions;
 				assets = body.assets;
-				deferredData.resolve(true);
+				Q.all(promises).then(function(){
+					deferredData.resolve(true);
+				});	
 				console.log(regions);
 			});
 			
