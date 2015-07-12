@@ -49,8 +49,6 @@ router.get('/', function(req, res){
 
 			assetTrace.forEach(function(item, j){
 
-				var i = j + startIndex;
-
 				if(assetTrace[i].gateway !== 'Missing'){
 
 					var deferredFor = Q.defer();
