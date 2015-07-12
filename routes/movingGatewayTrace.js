@@ -28,17 +28,40 @@ router.get('/', function(req, res){
 		else{
 
 			var assetTrace = body.trace;
+
+			var oneDayFromNow = Date.now() - 86400000;
+			//var oneDayFromNow  = 1436425565815;
+
+			var startIndex = 0;
+			for(var i=0; i<assetTrace.length; i++){
+				if(assetTrace[i].timestamp > oneDayFromNow && startIndex === 0 && i > 0){
+					startIndex = i-1;
+				}
+			}
+
+			var assetTrace = [];
+			for(var i=startIndex; i<body.trace.length; i++)
+				assetTrace.push(body.trace[i]);
+
 			var allTrace = [];
 
 			var promises = [];
 
-			assetTrace.forEach(function(item, i){
+			assetTrace.forEach(function(item, j){
+
+				var i = j + startIndex;
 
 				if(assetTrace[i].gateway !== 'Missing'){
 
 					var deferredFor = Q.defer();
 					var gatewayName = assetTrace[i].gateway;
-					var startTime = assetTrace[i].timestamp;
+					var startTime;
+
+					if(i === 0)
+						startTime = oneDayFromNow; //one day from now					
+					else
+						startTime = assetTrace[i].timestamp;
+					
 
 					var endTime;
 
