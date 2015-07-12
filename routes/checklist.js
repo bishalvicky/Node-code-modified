@@ -56,7 +56,7 @@ router.get('/', function(req, res){
 			if (req.query.asset){
 				getAssetLocation(req.query.asset).then(function(data){
 					trace = data;
-					res.render('checklist',{
+					res.render('addChecklist',{
 						title: "Checklist",
 						content: response.body,
 						username: session_data.username,
@@ -65,7 +65,7 @@ router.get('/', function(req, res){
 				});
 			}
 			else {
-				res.render('checklist',{
+				res.render('addChecklist',{
 					title: "Checklist",
 					content: response.body,
 					username: session_data.username,
@@ -90,7 +90,7 @@ router.post('/', function(req, res){
 		};
 
 		request.post(options, function(request, response){
-			res.render('checklist',{
+			res.render('addChecklist',{
 				title: "Checklist",
 				content: response.body,
 				trace: ''
