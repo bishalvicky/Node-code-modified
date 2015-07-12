@@ -1,7 +1,4 @@
-function createChecklist(checklist, index, container,string){
-
-
-
+function createChecklist(checklist, index, container,string, trueAssets, trueRegions){
 	if (string === 'region'){
 		var cross = $('<div/>')
 							.addClass('cross')
@@ -43,13 +40,13 @@ function createChecklist(checklist, index, container,string){
 										.attr('data-type',string)
 										.appendTo(section);
 
-	var toggleAll = $('<input/>')
+	/*var toggleAll = $('<input/>')
 									.attr('id','toggle-all')
 									.addClass('toggle-all')
 									.attr('type','checkbox')
 									.attr('data-checklist',index)
 									.attr('data-type',string)
-									.appendTo(mainSection);
+									.appendTo(mainSection);*/
 									
 
 
@@ -93,10 +90,18 @@ function createChecklist(checklist, index, container,string){
 								.html('X')
 								.appendTo(div);
 
-		var label = $('<label/>')
-								.text(item)
-								.attr('data-type',string)
-								.appendTo(div);
+		if (string === "asset")
+			var label = $('<label/>')
+									.text(getName(item,trueAssets))
+									.attr('data-type',string)
+									.appendTo(div);
+
+		if (string === "region")
+			var label = $('<label/>')
+									.text(getName(item,trueRegions))
+									.attr('data-type',string)
+									.appendTo(div);
+
 	});
 
 	if (string === 'asset'){
@@ -112,3 +117,47 @@ function createChecklist(checklist, index, container,string){
 	}
 
 }
+
+function getName(id, arr){
+	for (var i = 0; i<arr.length; i++){
+		if (arr[i].value === id){
+			return arr[i].label;
+		}
+	}
+};
+
+//Add items to checklist
+function addItem(ul, checklist, item, string, trueAssets, trueRegions){
+
+	var li = $('<li/>')
+					.addClass('view')
+					.attr('id',item)
+					.attr('data-checklist', checklist)
+					.attr('data-type',string)
+					.appendTo(ul);
+
+	var div = $('<div/>')
+						.addClass('view')
+						.attr('data-type',string)
+						.appendTo(li);
+
+	var cross = $('<div/>')
+				.addClass('toggle')
+				.attr('data-asset',item)
+				.attr('data-type',string)
+				.html('X')
+				.appendTo(div);
+
+	
+	if (string === "asset")
+		var label = $('<label/>')
+								.text(getName(item,trueAssets))
+								.attr('data-type',string)
+								.appendTo(div);
+
+	if (string === "region")
+		var label = $('<label/>')
+								.text(getName(item,trueRegions))
+								.attr('data-type',string)
+								.appendTo(div);
+};

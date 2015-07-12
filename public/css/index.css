@@ -66,21 +66,20 @@ input[type="checkbox"] {
 }
 
 #todoapp input::-webkit-input-placeholder {
-	font-style: italic;
+	
 	font-weight: 300;
-	color: #e6e6e6;
+	color: #474747;
 }
 
 #todoapp input::-moz-placeholder {
-	font-style: italic;
+	
 	font-weight: 300;
-	color: #e6e6e6;
+	color: #474747;
 }
 
 #todoapp input::input-placeholder {
-	font-style: italic;
 	font-weight: 300;
-	color: #e6e6e6;
+	color: #474747;
 }
 
 .checklist h1 {
@@ -131,7 +130,7 @@ input[type="checkbox"] {
 }
 
 #new-todo {
-	padding: 16px 16px 16px 60px;
+	padding: 16px 16px 16px 25px;
 	border: none;
 	background: rgba(0, 0, 0, 0.003);
 	box-shadow: inset 0 -2px 1px rgba(0,0,0,0.03);
@@ -523,7 +522,8 @@ input.gn-search {
 		font-size: 20px;
 }
 .assetQuery{
-	color: #ADFFAD;
-	text-align: center;
+	margin-top: 5%;
+	color: white;
+	text-align: right;
 	font-size: 20px;
 }

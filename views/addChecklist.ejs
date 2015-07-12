@@ -29,7 +29,7 @@
 				width: 100%;
 				margin-left: 1%;
 				overflow: auto;
-				margin-top: 10%;
+				margin-top: 5%;
 			}
 			.search_select{
 				text-transform: uppercase;
@@ -115,8 +115,8 @@
 															.attr('id','checklist'+index)
 															.insertBefore(plusContainer);
 
-					createChecklist(checklist, index, checklistDiv,'region');
-					createChecklist(checklist, index, checklistDiv,'asset');
+					createChecklist(checklist, index, checklistDiv,'region', trueAssets, trueRegions);
+					createChecklist(checklist, index, checklistDiv,'asset', trueAssets, trueRegions);
 					trueChecklists.push("checklist_"+index);
 				});
 
@@ -130,7 +130,11 @@
 					select: function(event, ui) {
 		        event.preventDefault();
 		        $(".search").val(ui.item.label);
-		        formData = ui.item.value;  
+		        formData = ui.item.value;
+		        if (formData.split("_")[0] === "asset")
+		        	$(".track").css("display","block");
+		        else
+		        	$(".track").css("display","none");
 			    },
 			    focus: function(event, ui) {
 			      event.preventDefault();
@@ -152,7 +156,6 @@
 				//Submitting the checklist
 				$(".submit").click(function(e){
 					e.preventDefault();
-					//var getValue = $(".search").val();
 					console.log(formKey);
 					var formKey = "";
 					if (formData.length === 0){
@@ -161,14 +164,24 @@
 					else{
 						formKey = formData.split("_")[0];
 					}
-					//console.log(getValue);
 					get('/checklist',"get",formKey,formData);
 				});
 
 				$(".track").click(function(e){
 					e.preventDefault();
-					var getValue = $(".search").val();
-					get('/locationFromDevice',"get","assetName",getValue);
+					get('/locationFromDevice',"get","assetName",formData);
+				});
+
+				$(".info").click(function(e){
+					if ($(this).hasClass("clicked")){
+						$(this).removeClass("clicked");
+						$(".assetQuery").css("display","none");
+					}
+					else{
+						$(this).addClass("clicked");
+						$(".assetQuery").css("display","block");	
+					}
+					
 				});
 
 				//Logging out the user
@@ -192,12 +205,14 @@
 														.attr('id','checklist'+clicks)
 														.insertBefore(plusContainer);
 
-					createChecklist(checklist, clicks,checklistDiv,'region');
-					createChecklist(checklist, clicks,checklistDiv,'asset');
+					createChecklist(checklist, clicks,checklistDiv,'region', trueAssets, trueRegions);
+					createChecklist(checklist, clicks,checklistDiv,'asset', trueAssets, trueRegions);
 					
 					checklists.push(checklist);
 
 					autocomplete();
+					$(".toggle-all").off('click');
+					$("#todo-list .toggle").off('click');
 					update();
 					cssFloat();
 					showCross();
@@ -222,76 +237,67 @@
 				};
 				cssFloat();
 
-				//Add items to checklist
-				function addItem(ul, checklist, item, string){
-
-					var li = $('<li/>')
-									.addClass('view')
-									.attr('id',item)
-									.attr('data-checklist', checklist)
-									.attr('data-type',string)
-									.appendTo(ul);
-
-					var div = $('<div/>')
-										.addClass('view')
-										.attr('data-type',string)
-										.appendTo(li);
-
-					var cross = $('<div/>')
-								.addClass('toggle')
-								.attr('data-asset',item)
-								.attr('data-type',string)
-								.html('X')
-								.appendTo(div);
-
-					var label = $('<label/>')
-											.text(item)
-											.attr('data-type',string)
-											.appendTo(div);
-
-					
-				};
+				
 
 				console.log(trace);
 
 				if (trace !== '')
-					$(".assetQuery").html("Present in "+trace.gateway);
+					$(".assetQuery").html(trace.gateway);
 
 				//Autocompleting assets and regions fields
 				function autocomplete(){
 					$(".asset").autocomplete({
 						source: data.assets,
+			    
 						select: function (a, b) {
+							a.preventDefault();
 							var checklistNo = parseInt(this.dataset.checklist);
 				      if (a.keyCode === 13){
-				      	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset');
+				      	$(this).val(b.item.label);
+				      	addItem($(".asset_checklist"+checklistNo),checklistNo,b.item.value,'asset', trueAssets, trueRegions);
+				      	$(".toggle-all").off('click');
+								$("#todo-list .toggle").off('click');
 				      	update();
 				      	
 				      	checklists[checklistNo].assets.push(b.item.value);
+				      	
 				      	data.assets = data.assets.filter(function(el){
-									return el!== b.item.value;
+									return el.value!== b.item.value;
 								});
+
 								$(".asset").autocomplete({
 									source: data.assets
 								});
 				  		}
 				  		$(this).val(''); 
 				  		return false;
-				  	}
+				  	},
+				  	focus: function(event, ui) {
+				      event.preventDefault();
+				      $(this).val(ui.item.label);
+				    }
 				  });
 
 				  $(".region").autocomplete({
 						source: data.regions,
 						select: function (a, b) {
+							a.preventDefault();
+							$(this).val(b.item.label);
 							var checklistNo = parseInt(this.dataset.checklist);
 				      if (a.keyCode === 13){
-				      	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region');
+				      	addItem($(".region_checklist"+checklistNo),checklistNo,b.item.value, 'region', trueAssets, trueRegions);
+				      	$(".toggle-all").off('click');
+								$("#todo-list .toggle").off('click');
 				      	update();
 				      	checklists[checklistNo].regions.push(b.item.value);
 				  		}
 				  		$(this).val(''); 
 				  		return false;
-				  	}
+				  	},
+				  	focus: function(event, ui) {
+				      event.preventDefault();
+				      $(this).val(ui.item.label);
+				    }
 				  });
 		  	};
 
@@ -319,8 +325,8 @@
 
 				//checkboxes
 				function update(){
-					$(".toggle-all").click(function(){
-						
+					$(".toggle-all").click(function(e){
+
 						var checklistNo = parseInt($(this).attr('data-checklist'));
 						var dataType = $(this).attr('data-type')
 						var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
@@ -338,7 +344,13 @@
 							checklists[checklistNo].assets=[];
 							checklists[checklistNo].regions=[];
 							console.log(checklists, checklistsCopy);
-							data.assets = data.assets.concat(checklistsCopy[checklistNo].assets);
+							checklistsCopy[checklistNo].forEach(function(item, index){
+								data.assets.push({
+									"value": item,
+									"label": getName(item, trueAssets)
+								});
+							});
+							//data.assets = data.assets.concat(checklistsCopy[checklistNo].assets);
 						}
 						else {
 							$(this).removeClass("clicked");
@@ -349,7 +361,7 @@
 							});
 
 							data.assets = data.assets.filter(function(el){
-								return checklistsCopy[checklistNo].assets.indexOf(el) < 0;
+								return checklistsCopy[checklistNo].assets.indexOf(el.value) < 0;
 							});
 
 							checklists[checklistNo] = JSON.parse(JSON.stringify(checklistsCopy[checklistNo]));
@@ -363,20 +375,16 @@
 					});
 
 					//checkboxes
-					$("#todo-list .toggle").click(function(){
+					$("#todo-list .toggle").on('click',function(){
 						var parent = $(this).parent().parent();
-						console.log(parent);
 						var checklistNo = parseInt(parent.attr('data-checklist'));
 						var dataType = $(this).attr('data-type');
-						console.log(dataType);
+						
 						var checklistSelector = ".checklist"+checklistNo+"_"+dataType;
 						
 						if(!($(this).hasClass("clicked"))) {
 							$(this).addClass("clicked");
-							var checkAll = $(checklistSelector +" .toggle:checked").length == $(checklistSelector+" .toggle").length;
-							var toggleAll = $(checklistSelector +' .toggle-all[data-checklist="'+checklistNo+'"]');
-							if (checkAll)
-								toggleAll[0].checked = true;
+							console.log("Clicked");
 							
 							parent.removeClass("view");
 							parent.addClass("completed");
@@ -396,8 +404,8 @@
 						}
 						else {
 							$(this).removeClass("clicked");
-							var toggleAll = $(checklistSelector+ ' .toggle-all[data-checklist="'+checklistNo+'"]');
-							toggleAll[0].checked = false;
+							
+							console.log("Not Clicked");
 							
 							parent.removeClass("completed");
 							parent.addClass("view");
@@ -419,6 +427,7 @@
 						});
 					});
 				};
+
 				update();
 
 				$(".refresh").click(function(){
@@ -440,7 +449,8 @@
 									<a class="gn-icon gn-icon-plus plus"></a>
 								</li>
 								<li><a class="gn-icon gn-icon-sync refresh"></a></li>
-								<li><a class="gn-icon gn-icon-track"></a></li>
+								<li><a class="gn-icon gn-icon-track track" style="display:none;"></a></li>
+								<li><a class="gn-icon gn-icon-info info"></a></li>
 							</ul>
 						</div><!-- /gn-scroller -->
 					</nav>
@@ -451,9 +461,10 @@
 				<li class="right"><a class="submit" href="#">Search</a></li>
 				
 			</ul>
+			<div class="assetQuery" style="display:none;"></div>
 			<div class="bottom">
 			  <div style="clear:both;" class="empty"></div>
-			  <div class="assetQuery"></div>
+			  
 			  <div class="plusContainer">
 			  </div>
 		  </div>
