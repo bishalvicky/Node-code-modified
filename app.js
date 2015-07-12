@@ -191,7 +191,7 @@ function assetListFromGateway(gateway){
 			if(!json.error){
 				//var json = JSON.parse(html);
 				var data = json[0].evt;
-				var assets = data.assets.split(" , ");
+				var assets = data.assets;
 				var latitude = data.latitude;
 				var longitude = data.longitude;
 				var altitude = data.altitude;
@@ -644,8 +644,17 @@ function loopUsers(){
 		if(!err){
 			globalData = body;
 			//console.log(JSON.stringify(globalData));
-
-			var gateways = globalData.gateways;		
+			var gateways = globalData.gateways;
+			getGatewaysFromIOT().then(function(data){
+				//console.log(data);
+				//console.log(gateways);
+				var diffGateways = data.difference(gateways);
+				
+				globalData.gateways = globalData.gateways.concat(diffGateways);
+				if (diffGateways.length !== 0)
+					insertToDb(globalData,"data");
+			});
+			
 			gateways.forEach(function (gateway, gatewayIndex){
 				var deferredPromise = Q.defer();
 				assetListFromGateway(gateway).then(function(data){
@@ -685,12 +694,28 @@ if (debug){
 	loopUsers();
 }
 
-var jsn = {
-	"Num": 5
-};
+function getGatewaysFromIOT(){
+	var deferred = Q.defer();
+	var options = {
+	  url: 'http://'+org+'.internetofthings.ibmcloud.com/api/v0001/devices',
+	  headers: {
+	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
+	  }
+	}
+
+	request(options, function(error, response, html){
+		response.body = JSON.parse(response.body);
+		var gateways = [];
+		for (var i=0; i < response.body.length; i++){
+			gateways.push(response.body[i].id);
+		}
+		deferred.resolve(gateways);
+	});
+	
+	return deferred.promise;
+}
 
 //Posetively insert data
-
 function insertToDb(jsn,name){
 	//console.log("Trying");
 	var deferred = Q.defer();
@@ -734,6 +759,14 @@ function insertToDb(jsn,name){
 
 // start server on the specified port and binding host
 /*app.listen(appEnv.port, appEnv.bind, function() {
+=======
+
+Array.prototype.difference = function(e) {
+	return this.filter(function(i) {return e.indexOf(i) < 0;});
+};
+
+app.listen(appEnv.port, appEnv.bind, function() {
+>>>>>>> 27f8daa4ae97868f4cd5d6e9f3c5fe7ffcc08c59
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
 });*/
