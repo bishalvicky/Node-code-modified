@@ -117,6 +117,7 @@ app.use('/logout',logout)
 
 var session_data;
 app.get('/',function(req,res){
+	console.log("Checking..!");
 	session_data = req.session;
 	if(session_data.username){
 		res.redirect('checklist');
