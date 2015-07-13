@@ -17,7 +17,7 @@ var appConfig = {
 
 ibmbluemix.initialize(appConfig);
 //var logger = ibmbluemix.getLogger();
-var push=ibmpush.initializeService();
+var push = ibmpush.initializeService();
 
 var app = express();
 var cloudant;
@@ -69,6 +69,7 @@ functions = {checkBasicAuthentication : checkBasicAuthentication};
 
 var insertdb = require('./routes/insertdb');
 var locationFromDevice = require('./routes/locationFromDevice');
+var locationFromDeviceEndPoint = require('./routes/locationFromDeviceEndPoint');
 var addGateways = require('./routes/addGateways');
 var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
@@ -97,6 +98,7 @@ app.use(session({secret: 'baaga'}));
 app.use(express.static(__dirname, 'public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
+app.use('/locationFromDeviceEndPoint',locationFromDeviceEndPoint);
 app.use('/addGateways',addGateways);
 app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
@@ -187,8 +189,7 @@ function assetListFromGateway(gateway){
 			if(!json.error){
 				//var json = JSON.parse(html);
 				var data = json[0].evt;
-				console.log((data.assets));
-				var assets = data.assets.split(",");
+				var assets = data.assets;
 				var latitude = data.latitude;
 				var longitude = data.longitude;
 				var altitude = data.altitude;
@@ -533,7 +534,6 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 
 function addToTraceAndNotify(asset,gateway,message_alert,username){
 
-	var array_cId = [{"consumerId" : username}];
 	console.log(username);
 	var deferred = Q.defer();
 	db.get(asset, function(err,body){
@@ -569,21 +569,8 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 					"trace" : arr
 				};
 
-				var message = {
-					"alert": message_alert,
-					"url": "http://www.google.com"
-				};
+				sendNotification(message_alert,username);
 
-				/********************************************************************
-				*******************************ALERT*********************************
-				*********************************************************************/
-				push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
-					console.log("Notification sent successfully to all devices.");
-				}, function(err) {
-					console.log("Failed to send notification to all devices.");
-					console.log(err);
-				});	
-				
 				insertToDb(asset_json, asset).then(function(){
 					deferred.resolve(true);
 				});
@@ -595,6 +582,24 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 	});
 	return deferred.promise;
 };
+
+function sendNotification(message_alert,username){
+	var array_cId = [{"consumerId" : username}];
+	var message = {
+		"alert": message_alert,
+		"url": "http://www.google.com"
+	};
+
+	/********************************************************************
+	*******************************ALERT*********************************
+	*********************************************************************/
+	push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
+		console.log("Notification sent successfully to all devices.");
+	}, function(err) {
+		console.log("Failed to send notification to all devices.");
+		console.log(err);
+	});	
+}
 
 
 
@@ -641,8 +646,17 @@ function loopUsers(){
 		if(!err){
 			globalData = body;
 			//console.log(JSON.stringify(globalData));
-
-			var gateways = globalData.gateways;		
+			var gateways = globalData.gateways;
+			getGatewaysFromIOT().then(function(data){
+				//console.log(data);
+				//console.log(gateways);
+				var diffGateways = data.difference(gateways);
+				
+				globalData.gateways = globalData.gateways.concat(diffGateways);
+				if (diffGateways.length !== 0)
+					insertToDb(globalData,"data");
+			});
+			
 			gateways.forEach(function (gateway, gatewayIndex){
 				var deferredPromise = Q.defer();
 				assetListFromGateway(gateway).then(function(data){
@@ -682,12 +696,28 @@ if (debug){
 	loopUsers();
 }
 
-var jsn = {
-	"Num": 5
-};
+function getGatewaysFromIOT(){
+	var deferred = Q.defer();
+	var options = {
+	  url: 'http://'+org+'.internetofthings.ibmcloud.com/api/v0001/devices',
+	  headers: {
+	  	'Authorization': 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
+	  }
+	}
+
+	request(options, function(error, response, html){
+		response.body = JSON.parse(response.body);
+		var gateways = [];
+		for (var i=0; i < response.body.length; i++){
+			gateways.push(response.body[i].id);
+		}
+		deferred.resolve(gateways);
+	});
+	
+	return deferred.promise;
+}
 
 //Posetively insert data
-
 function insertToDb(jsn,name){
 	//console.log("Trying");
 	var deferred = Q.defer();
@@ -730,6 +760,11 @@ function insertToDb(jsn,name){
 
 
 // start server on the specified port and binding host
+
+Array.prototype.difference = function(e) {
+	return this.filter(function(i) {return e.indexOf(i) < 0;});
+};
+
 app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
