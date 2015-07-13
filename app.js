@@ -538,7 +538,6 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 
 function addToTraceAndNotify(asset,gateway,message_alert,username){
 
-	var array_cId = [{"consumerId" : username}];
 	console.log(username);
 	var deferred = Q.defer();
 	db.get(asset, function(err,body){
@@ -575,21 +574,8 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 					"name": body.name
 				};
 
-				var message = {
-					"alert": message_alert,
-					"url": "http://www.google.com"
-				};
+				sendNotification(message_alert,username);
 
-				/********************************************************************
-				*******************************ALERT*********************************
-				*********************************************************************/
-				push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
-					console.log("Notification sent successfully to all devices.");
-				}, function(err) {
-					console.log("Failed to send notification to all devices.");
-					console.log(err);
-				});	
-				
 				insertToDb(asset_json, asset).then(function(){
 					deferred.resolve(true);
 				});
@@ -601,6 +587,24 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 	});
 	return deferred.promise;
 };
+
+function sendNotification(message_alert,username){
+	var array_cId = [{"consumerId" : username}];
+	var message = {
+		"alert": message_alert,
+		"url": "http://www.google.com"
+	};
+
+	/********************************************************************
+	*******************************ALERT*********************************
+	*********************************************************************/
+	push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
+		console.log("Notification sent successfully to all devices.");
+	}, function(err) {
+		console.log("Failed to send notification to all devices.");
+		console.log(err);
+	});	
+}
 
 
 
