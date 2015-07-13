@@ -765,19 +765,15 @@ function insertToDb(jsn,name){
 
 
 // start server on the specified port and binding host
-/*app.listen(appEnv.port, appEnv.bind, function() {
-=======
-
 Array.prototype.difference = function(e) {
 	return this.filter(function(i) {return e.indexOf(i) < 0;});
 };
 
 app.listen(appEnv.port, appEnv.bind, function() {
->>>>>>> 27f8daa4ae97868f4cd5d6e9f3c5fe7ffcc08c59
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
-});*/
-
-var server = app.listen(6001, '0.0.0.0', function() {
-  console.log('Listening on port %d', server.address().port);
 });
+
+/*var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
+});*/
