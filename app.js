@@ -75,6 +75,7 @@ var addAssets = require('./routes/addAssets');
 var addRegions = require('./routes/addRegions');
 var setup = require('./routes/setup');
 var checklist = require('./routes/checklist');
+var addChecklist = require('./routes/addChecklist');
 var logout = require('./routes/logout');
 
 var register = require('./routes/register');
@@ -83,6 +84,7 @@ var logincheck = require('./routes/logincheck');
 
 var addChecklist = require('./routes/addChecklist');
 var checklistEndPoint = require('./routes/checklistEndPoint');
+var movingGatewayTrace = require('./routes/movingGatewayTrace');
 
 
 app.set('view engine', 'ejs');
@@ -98,12 +100,14 @@ app.use(session({secret: 'baaga'}));
 app.use(express.static(__dirname, 'public'));
 app.use('/insertdb',insertdb);
 app.use('/locationFromDevice',locationFromDevice);
+app.use('/movingGatewayTrace', movingGatewayTrace);
 app.use('/locationFromDeviceEndPoint',locationFromDeviceEndPoint);
 app.use('/addGateways',addGateways);
 app.use('/addAssets',addAssets);
 app.use('/addRegions',addRegions);
 app.use('/setup', setup);
 app.use('/checklist', checklist);
+app.use('/addChecklist', addChecklist);
 app.use('/register',register);
 app.use('/login',login);
 app.use('/logincheck',logincheck);
@@ -760,16 +764,19 @@ function insertToDb(jsn,name){
 
 
 // start server on the specified port and binding host
+/*app.listen(appEnv.port, appEnv.bind, function() {
+=======
 
 Array.prototype.difference = function(e) {
 	return this.filter(function(i) {return e.indexOf(i) < 0;});
 };
 
 app.listen(appEnv.port, appEnv.bind, function() {
+>>>>>>> 27f8daa4ae97868f4cd5d6e9f3c5fe7ffcc08c59
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
-});
-
-/*var server = app.listen(6001, '0.0.0.0', function() {
-  console.log('Listening on port %d', server.address().port);
 });*/
+
+var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
+});

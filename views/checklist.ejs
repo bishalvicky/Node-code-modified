@@ -173,8 +173,8 @@
 													.attr('id','checklist'+index)
 													.insertBefore(plusContainer);
 
-			createChecklist(checklist, index, checklistDiv,'asset');
 			createChecklist(checklist, index, checklistDiv,'region');
+			createChecklist(checklist, index, checklistDiv,'asset');
 			trueChecklists.push("checklist_"+index);
 		});
 
@@ -255,8 +255,9 @@
 												.attr('id','checklist'+clicks)
 												.insertBefore(plusContainer);
 
-			createChecklist(checklist, clicks,checklistDiv,'asset');
 			createChecklist(checklist, clicks,checklistDiv,'region');
+			createChecklist(checklist, clicks,checklistDiv,'asset');
+			
 			checklists.push(checklist);
 
 			autocomplete();
@@ -485,27 +486,6 @@
 </head>
 <body>
 	<div class="container">
-		<!--div class="row">
-		  <div class="col-lg-10">
-		  <form class="form-inline">
-		    <div class="form-group" style="width:100%;">
-		      <select class="form-control search_select" style="width:15%;">
-		      	<option value="alll">Checklists</option>
-					  <option value="checklist">Checklist</option>
-					  <option value="region">Region</option>
-					  <option value="asset">Asset</option>
-					</select>
-		      <input type="text" class="form-control search" aria-label="..." style="width:84%;">
-		    </div>
-		    </form>
-		  </div>
-		  <button type="button" class="btn btn-default submit">Submit</button>
-		  <form action="logout" method = "get">
-			    <input type="submit" class="btn btn-default logout" value="Logout">
-			</form>
-
-
-	  </div-->
 	  <ul id="gn-menu" class="gn-menu-main">
 			<li class="left">
 	      <select class="form-control search_select">

@@ -16,6 +16,7 @@ router.get('/', function(req, res){
 			url = url + '?assetName=' + req.query.assetName;
 		}
 
+
 		var options = {
 		  url: url,
 		  headers: {
