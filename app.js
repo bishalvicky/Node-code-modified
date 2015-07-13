@@ -571,7 +571,8 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 					"_rev": body._rev,
 					"type" : body.type,
 					"rules" : body.rules,
-					"trace" : arr
+					"trace" : arr,
+					"name": body.name
 				};
 
 				var message = {
