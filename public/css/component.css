@@ -157,6 +157,10 @@
 		content: "\e603"
 }
 
+.gn-icon-info::before {
+		content: "\e608"
+}
+
 .gn-icon-search::before {
 		content: "\e005"
 }

@@ -18,6 +18,20 @@ Array.prototype.getUnique = function() {
     	a.push(e);
     return a;
 }
+function makeAutoComplete(arr,trueArr){
+	var ret = [];
+	arr.forEach(function(item, i){
+		trueArr.forEach(function(it, j){
+			if (item === it.value){
+				ret.push({
+					"label": trueArr[j].label,
+					"value": trueArr[j].value
+				});
+			}
+		});
+	});
+	return ret;
+}
 
 function getNames(arr){
 	var promises = [];
@@ -105,8 +119,7 @@ functions.checkBasicAuthentication(req).then(function(data){
 				assets = body.assets;
 				Q.all(promises).then(function(){
 					deferredData.resolve(true);
-				});	
-				console.log(regions);
+				});
 			});
 			
 
@@ -143,6 +156,9 @@ functions.checkBasicAuthentication(req).then(function(data){
 				assets = assets.filter(function (el){
 					return checklistAssets.indexOf(el) < 0;
 				});
+
+				regions = makeAutoComplete(regions,trueRegions);
+				assets = makeAutoComplete(assets,trueAssets);
 
 				var data = {
 					"regions": regions,
@@ -183,11 +199,31 @@ router.post('/', function(req, res){
 
 			var deferredData = Q.defer();
 			db.get("data", function(err, body){
-				trueAssets = body.assets.splice();
-				trueRegions = body.regions.splice();
+				console.log(body.assets);
+				trueAssets = body.assets.slice();
+				trueRegions = body.regions.slice();
+				var promises = [];
+
+				var deferredRegions = Q.defer();
+				getNames(trueRegions).then(function(data){
+					trueRegions = data;
+					deferredRegions.resolve(true);
+				});
+				promises.push(deferredRegions.promise);
+				
+				var deferredAssets = Q.defer();
+				getNames(trueAssets).then(function(data){
+					trueAssets = data;
+					deferredAssets.resolve(true);
+				});
+				promises.push(deferredAssets.promise);
 				regions = body.regions;
 				assets = body.assets;
-				deferredData.resolve(true);
+				Q.all(promises).then(function(){
+					
+					deferredData.resolve(true);
+				});	
+				
 			});
 
 			promises.push(deferredData.promise);
@@ -221,6 +257,9 @@ router.post('/', function(req, res){
 					assets = assets.filter(function (el){
 						return checklistAssets.indexOf(el) < 0;
 					});
+
+					regions = makeAutoComplete(regions,trueRegions);
+					assets = makeAutoComplete(assets,trueAssets);
 
 					var data = {
 						"regions": regions,

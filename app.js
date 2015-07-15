@@ -117,6 +117,7 @@ app.use('/logout',logout)
 
 var session_data;
 app.get('/',function(req,res){
+	console.log("Checking..!");
 	session_data = req.session;
 	if(session_data.username){
 		res.redirect('checklist');
@@ -540,7 +541,6 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 
 function addToTraceAndNotify(asset,gateway,message_alert,username){
 
-	var array_cId = [{"consumerId" : username}];
 	console.log(username);
 	var deferred = Q.defer();
 	db.get(asset, function(err,body){
@@ -573,24 +573,12 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 					"_rev": body._rev,
 					"type" : body.type,
 					"rules" : body.rules,
-					"trace" : arr
+					"trace" : arr,
+					"name": body.name
 				};
 
-				var message = {
-					"alert": message_alert,
-					"url": "http://www.google.com"
-				};
+				sendNotification(message_alert,username);
 
-				/********************************************************************
-				*******************************ALERT*********************************
-				*********************************************************************/
-				push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
-					console.log("Notification sent successfully to all devices.");
-				}, function(err) {
-					console.log("Failed to send notification to all devices.");
-					console.log(err);
-				});	
-				
 				insertToDb(asset_json, asset).then(function(){
 					deferred.resolve(true);
 				});
@@ -602,6 +590,24 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 	});
 	return deferred.promise;
 };
+
+function sendNotification(message_alert,username){
+	var array_cId = [{"consumerId" : username}];
+	var message = {
+		"alert": message_alert,
+		"url": "http://www.google.com"
+	};
+
+	/********************************************************************
+	*******************************ALERT*********************************
+	*********************************************************************/
+	push.sendNotificationByConsumerId(message,array_cId,null).then(function (response) {
+		console.log("Notification sent successfully to all devices.");
+	}, function(err) {
+		console.log("Failed to send notification to all devices.");
+		console.log(err);
+	});	
+}
 
 
 
@@ -762,19 +768,15 @@ function insertToDb(jsn,name){
 
 
 // start server on the specified port and binding host
-/*app.listen(appEnv.port, appEnv.bind, function() {
-=======
-
 Array.prototype.difference = function(e) {
 	return this.filter(function(i) {return e.indexOf(i) < 0;});
 };
 
 app.listen(appEnv.port, appEnv.bind, function() {
->>>>>>> 27f8daa4ae97868f4cd5d6e9f3c5fe7ffcc08c59
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
-});*/
-
-var server = app.listen(6001, '0.0.0.0', function() {
-  console.log('Listening on port %d', server.address().port);
 });
+
+/*var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
+});*/
