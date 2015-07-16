@@ -92,7 +92,6 @@ router.get('/', function(req, res){
 								var allTrace = [];
 
 								populate(mapInfo, allTrace);
-
 /*
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
@@ -111,6 +110,24 @@ router.get('/', function(req, res){
 								}
 */
 								console.log(allTrace);
+/*
+								for(var k=0; k<mapInfo.length; k++){
+									for(var j=0; j<mapInfo[k].length; j++){
+
+										var lat = mapInfo[k][j].evt.latitude;
+										var lng = mapInfo[k][j].evt.longitude;
+										var alti = mapInfo[k][j].evt.altitude;
+
+										var element = {
+											"coordinates": [lat, lng, alti],
+											"timestamp": mapInfo[k][j].timestamp.$date
+										};
+
+										allTrace = allTrace.concat(element);
+									}
+								}
+*/
+
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
 								if (typeof allTrace[0] === "undefined") 
