@@ -91,9 +91,9 @@ router.get('/', function(req, res){
 								console.log("cursorId undef: "+mapInfo[0]);
 								var allTrace = [];
 
-								populate(mapInfo, allTrace);
+								//populate(mapInfo, allTrace);
 
-/*
+
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
 
@@ -109,7 +109,7 @@ router.get('/', function(req, res){
 										allTrace = allTrace.concat(element);
 									}
 								}
-*/
+
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
 								if (typeof allTrace[0] === "undefined") 
