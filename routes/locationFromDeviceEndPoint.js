@@ -24,7 +24,7 @@ router.get('/', function(req, res){
 				else{
 					console.log("Asset is type GPS");
 
-					if(body.type === "gps"){
+					if(body.type === "GPS"){
 						var gatewayName = assetName.split("_");
 						gatewayName = "gateway_" + gatewayName[1];
 
@@ -65,7 +65,7 @@ router.get('/', function(req, res){
 								}
 								else {
 									console.log("else chal gya: " +mapInfo[0]);
-									//populate(mapInfo, allTrace);
+									populate(mapInfo, allTrace);
 									response.end("");
 								}
 							});
@@ -91,24 +91,7 @@ router.get('/', function(req, res){
 								console.log("cursorId undef: "+mapInfo[0]);
 								var allTrace = [];
 
-								//populate(mapInfo, allTrace);
-
-
-								for(var k=0; k<mapInfo.length; k++){
-									for(var j=0; j<mapInfo[k].length; j++){
-
-										var lat = mapInfo[k][j].evt.latitude;
-										var lng = mapInfo[k][j].evt.longitude;
-										var alti = mapInfo[k][j].evt.altitude;
-
-										var element = {
-											"coordinates": [lat, lng, alti],
-											"timestamp": mapInfo[k][j].timestamp.$date
-										};
-
-										allTrace = allTrace.concat(element);
-									}
-								}
+								populate(mapInfo, allTrace);
 
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
