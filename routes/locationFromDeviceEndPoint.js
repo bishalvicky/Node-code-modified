@@ -30,7 +30,7 @@ router.get('/', function(req, res){
 
 						var mapInfo = [];
 						//var endTime = Date.now();
-						var endTime = 1437016231238 - (60000*25);
+						var endTime = 1437016231238 - (60000*20);
 						var oneDay = 86400000;
 						var oneMinute = 60000;
 						var startTime = endTime - oneDay;
