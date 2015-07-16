@@ -65,7 +65,7 @@ router.get('/', function(req, res){
 								}
 								else {
 									console.log("else chal gya: " +mapInfo[0]);
-									populate(mapInfo, allTrace);
+									//populate(mapInfo, allTrace);
 									response.end("");
 								}
 							});
