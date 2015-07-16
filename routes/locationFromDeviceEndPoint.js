@@ -24,7 +24,7 @@ router.get('/', function(req, res){
 				else{
 					console.log("Asset is type GPS");
 
-					if(body.type === "gps"){
+					if(body.type === "GPS"){
 						var gatewayName = assetName.split("_");
 						gatewayName = "gateway_" + gatewayName[1];
 
@@ -110,6 +110,7 @@ router.get('/', function(req, res){
 									}
 								}
 */
+								console.log(allTrace);
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
 								if (typeof allTrace[0] === "undefined") 
