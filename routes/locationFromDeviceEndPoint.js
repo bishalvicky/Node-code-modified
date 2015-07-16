@@ -29,7 +29,8 @@ router.get('/', function(req, res){
 						gatewayName = "gateway_" + gatewayName[1];
 
 						var mapInfo = [];
-						var endTime = Date.now();
+						//var endTime = Date.now();
+						var endTime = 1437016231238- 60000*15;
 						var oneDay = 86400000;
 						var oneMinute = 60000;
 						var startTime = endTime - oneDay;
