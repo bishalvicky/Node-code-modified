@@ -65,6 +65,7 @@ router.get('/', function(req, res){
 								}
 								else {
 									console.log("else chal gya: " +mapInfo[0]);
+									console.log(JSON.stringify(mapInfo));
 									populate(mapInfo, allTrace);
 									response.end("");
 								}
@@ -90,9 +91,9 @@ router.get('/', function(req, res){
 							else {
 								console.log("cursorId undef: "+mapInfo[0]);
 								var allTrace = [];
+								console.log(JSON.stringify(mapInfo));
+								//populate(mapInfo, allTrace);
 
-								populate(mapInfo, allTrace);
-/*
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
 
@@ -108,8 +109,8 @@ router.get('/', function(req, res){
 										allTrace = allTrace.concat(element);
 									}
 								}
-*/
-								console.log(allTrace);
+
+								console.log(JSON.stringify(allTrace));
 /*
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
