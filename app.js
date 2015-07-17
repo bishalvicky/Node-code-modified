@@ -117,6 +117,7 @@ app.use('/logout',logout)
 
 var session_data;
 app.get('/',function(req,res){
+	console.log("Checking..!");
 	session_data = req.session;
 	if(session_data.username){
 		res.redirect('checklist');
@@ -266,7 +267,7 @@ function listOfGatewaysAndRegions(checklist){
 	return deferredBla.promise;
 }
 
-function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex, username){
+function checkNonGPSinGateways(asset, asset_name, gateways, assetsPresent, assetIndex, username){
 	var promisesGateways = [];
 	var message_alert;
 	gateways.forEach(function(gateway, gatewayIndex){
@@ -278,7 +279,7 @@ function checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex, usern
 				if (body.assets.indexOf(asset) > - 1){
 					console.log(asset+" is present in "+gateways[gatewayIndex]);
 					assetsPresent[assetIndex] = true;
-					message_alert = asset+": Now present in "+gateways[gatewayIndex];
+					message_alert = asset_name +": Now present in "+gateways[gatewayIndex];
 					addToTraceAndNotify(asset, gateway, message_alert, username).then(function(){
 						deferredGateway.resolve(true);
 					});
@@ -355,9 +356,10 @@ function checkCheckList(checklist,username){
 		assets.forEach(function(asset, assetIndex){
 			var deferred_asset = Q.defer();
 			db.get(asset, function(err, bodyAsset){
+				var asset_name = bodyAsset.name;
 				if(!err){
 					if (bodyAsset.type !== "gps"){
-						checkNonGPSinGateways(asset, gateways, assetsPresent, assetIndex, username).then(function(){							
+						checkNonGPSinGateways(asset, asset_name, gateways, assetsPresent, assetIndex, username).then(function(){							
 							deferred_asset.resolve(true);
 						});
 					}
@@ -389,6 +391,7 @@ function checkCheckList(checklist,username){
 
 					db.get(assets[assetBooleanIndex], function(err,body){
 						
+						var asset_name = body.name;
 						if(!err){
 							if(body.type == "gps"){
 								checkInOtherRegionsGPS(assets[assetBooleanIndex],checklist.regions, username).then(function(){
@@ -396,7 +399,7 @@ function checkCheckList(checklist,username){
 								});
 							}
 							else{
-								checkInOtherRegionsNonGPS(assets[assetBooleanIndex],checklist.regions,username).then(function(){
+								checkInOtherRegionsNonGPS(assets[assetBooleanIndex], asset_name,checklist.regions,username).then(function(){
 									promiseCheckInOtherRegions.resolve(true);
 								});
 							}
@@ -422,7 +425,7 @@ function checkCheckList(checklist,username){
 }
 
 
-function checkInOtherRegionsNonGPS(asset,checkedRegions, username){
+function checkInOtherRegionsNonGPS(asset, asset_name, checkedRegions, username){
 	var found = 0;
 	var deferred = Q.defer();
 	var message_alert;
@@ -454,7 +457,7 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions, username){
 									//if given asset found in assets of that gateway
 									if(assetsInGateway.indexOf(asset) > -1){
 										found = 1;
-										message_alert = "Missing Asset: "+ asset + "	Found in: " + gatewayInRegion + "["+region+"]";
+										message_alert = asset_name + " missing. Found in: " + gatewayInRegion + "["+region+"]";
 										console.log(message_alert);
 										addToTraceAndNotify(asset,gatewayInRegion,message_alert, username).then(function(){
 											deferredGateway.resolve(true);
@@ -486,7 +489,7 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions, username){
 
 		Q.all(promises).then(function(){
 			if(found == 0){
-				message_alert = "Missing Asset: "+asset+ " Not found anywhere!!";
+				message_alert = asset_name+ " missing. Not found anywhere!!";
 				console.log(message_alert);
 				addToTraceAndNotify(asset,"Missing",message_alert,username).then(function(){
 					
@@ -595,7 +598,8 @@ function addToTraceAndNotify(asset,gateway,message_alert,username){
 					"_rev": body._rev,
 					"type" : body.type,
 					"rules" : body.rules,
-					"trace" : arr
+					"trace" : arr,
+					"name": body.name
 				};
 
 				sendNotification(message_alert,username);
@@ -791,8 +795,6 @@ function insertToDb(jsn,name){
 // };
 
 // start server on the specified port and binding host
-
-
 
 app.listen(appEnv.port, appEnv.bind, function() {
 	// print a message when the server starts listening

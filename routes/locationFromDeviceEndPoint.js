@@ -24,12 +24,13 @@ router.get('/', function(req, res){
 				else{
 					console.log("Asset is type GPS");
 
-					if(body.type === "gps"){
+					if(body.type === "GPS"){
 						var gatewayName = assetName.split("_");
 						gatewayName = "gateway_" + gatewayName[1];
 
 						var mapInfo = [];
-						var endTime = Date.now();
+						//var endTime = Date.now();
+						var endTime = 1437016231238 - (60000*20);
 						var oneDay = 86400000;
 						var oneMinute = 60000;
 						var startTime = endTime - oneDay;
@@ -65,6 +66,7 @@ router.get('/', function(req, res){
 								}
 								else {
 									console.log("else chal gya: " +mapInfo[0]);
+									console.log(JSON.stringify(mapInfo));
 									populate(mapInfo, allTrace);
 									response.end("");
 								}
@@ -90,9 +92,26 @@ router.get('/', function(req, res){
 							else {
 								console.log("cursorId undef: "+mapInfo[0]);
 								var allTrace = [];
+								console.log(JSON.stringify(mapInfo));
+								//populate(mapInfo, allTrace);
 
-								populate(mapInfo, allTrace);
+								for(var k=0; k<mapInfo.length; k++){
+									for(var j=0; j<mapInfo[k].length; j++){
 
+										var lat = mapInfo[k][j].evt.latitude;
+										var lng = mapInfo[k][j].evt.longitude;
+										var alti = mapInfo[k][j].evt.altitude;
+
+										var element = {
+											"coordinates": [lat, lng, alti],
+											"timestamp": mapInfo[k][j].timestamp.$date
+										};
+
+										allTrace = allTrace.concat(element);
+									}
+								}
+
+								console.log(JSON.stringify(allTrace));
 /*
 								for(var k=0; k<mapInfo.length; k++){
 									for(var j=0; j<mapInfo[k].length; j++){
@@ -110,6 +129,7 @@ router.get('/', function(req, res){
 									}
 								}
 */
+
 								var temper = allTrace.sort(function(a,b){ return a.timestamp-b.timestamp });
 								
 								if (typeof allTrace[0] === "undefined") 
