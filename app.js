@@ -303,6 +303,7 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 	var gateway = "gateway"+"_"+tukdeAsset[1];
 	var promises = [];
 	var deferred = Q.defer();
+	var message_alert;
 
 	//console.log(gateway);
 	db.get(gateway, function(err, body) {
@@ -311,15 +312,22 @@ function checkGPSinRegions(asset, regionPolygons, assetsPresent, assetIndex){
 				var contains = geojson.pointInPolygon(body,regionPolygon);
 				if (contains){
 					assetsPresent[assetIndex] = true;
-					console.log(asset+" is present in "+regionPolygon.region)
+					message_alert = asset+" is present in "+regionPolygon.region;
+					console.log(message_alert);
+					addToTraceAndNotify(asset, regionPolygon.region, message_alert, username).then(function(data){
+						deferred.resolve(true);
+					});
 				}
+				else
+					deferred.resolve(true);
 					
 			});
 		}
 		else{
 			console.log("Get Error");
+			deferred.resolve(true);
 		}
-		deferred.resolve(true);
+		
 	});
 	return deferred.promise;
 }
@@ -354,7 +362,7 @@ function checkCheckList(checklist,username){
 						});
 					}
 					else {
-						checkGPSinRegions(asset, regions, assetsPresent, assetIndex).then(function(){
+						checkGPSinRegions(asset, regions, assetsPresent, assetIndex, username).then(function(){
 							deferred_asset.resolve(true);
 						});
 					}
@@ -383,7 +391,7 @@ function checkCheckList(checklist,username){
 						
 						if(!err){
 							if(body.type == "gps"){
-								checkInOtherRegionsGPS(assets[assetBooleanIndex],checklist.regions).then(function(){
+								checkInOtherRegionsGPS(assets[assetBooleanIndex],checklist.regions, username).then(function(){
 									promiseCheckInOtherRegions.resolve(true);
 								});
 							}
@@ -491,13 +499,14 @@ function checkInOtherRegionsNonGPS(asset,checkedRegions, username){
 	return deferred.promise;
 };
 
-function checkInOtherRegionsGPS(asset,checkedRegions){
+function checkInOtherRegionsGPS(asset,checkedRegions,username){
 	
 	var found = 0;
 	var tukdeAsset = asset.split("_");
 	var gateway = "gateway"+"_"+tukdeAsset[1];
 	var regions = globalData.regions;
 	var deferred_fun = Q.defer();
+	var message_alert;
 
 	db.get(gateway,function(err,body){
 		if(!err){
@@ -511,20 +520,36 @@ function checkInOtherRegionsGPS(asset,checkedRegions){
 							//console.log(body.coordinates + " in " + bodyRegion.coordinates + "-" + contains);
 							if(contains){
 								found = 1;
-								console.log("Missing Asset:" + asset + " Found in region:" + region);
+								message_alert = "Missing Asset:" + asset + " Found in region:" + region;
+								console.log(message_alert);
+								addToTraceAndNotify(asset,region,message_alert,username).then(function(data){
+									deferred.resolve(true);
+								});
 							}
-						}		
+							else
+								deferred.resolve(true);
+						}
+						else
+							deferred.resolve(true);
+
 					}
-					deferred.resolve(true);			
+					else
+						deferred.resolve(true);			
 				});
 				promises.push(deferred.promise);
 			});
 
 			Q.all(promises).then(function(data){
 				if(!found){
-					console.log("Missing Asset:" + asset + " Not Found Anywhere!!");
+					message_alert = "Missing Asset:" + asset + " Not Found Anywhere!!";
+					console.log(message_alert);
+					addToTraceAndNotify(asset,"Missing",message_alert,username).then(function(data){
+						deferred_fun.resolve(true);
+					});
 				}
-				deferred_fun.resolve(true);
+				else
+					deferred_fun.resolve(true);
+				
 			});
 			
 		}
@@ -695,7 +720,7 @@ function loopUsers(){
 	});
 };
 
-var debug = true;
+var debug = false;
 if (debug){
 	loopUsers();
 }
@@ -761,22 +786,19 @@ function insertToDb(jsn,name){
 //var a = geojson.pointInPolygon({"type":"Point","coordinates":[13,77,0]},{"type":"Polygon", "coordinates":[[[0,0],[6,0],[6,6],[0,6]]]})
 
 // console.log(a);
-
+// Array.prototype.difference = function(e) {
+// 	return this.filter(function(i) {return e.indexOf(i) < 0;});
+// };
 
 // start server on the specified port and binding host
-/*app.listen(appEnv.port, appEnv.bind, function() {
-=======
 
-Array.prototype.difference = function(e) {
-	return this.filter(function(i) {return e.indexOf(i) < 0;});
-};
+
 
 app.listen(appEnv.port, appEnv.bind, function() {
->>>>>>> 27f8daa4ae97868f4cd5d6e9f3c5fe7ffcc08c59
 	// print a message when the server starts listening
   console.log("server starting on " + appEnv.url);
-});*/
-
-var server = app.listen(6001, '0.0.0.0', function() {
-  console.log('Listening on port %d', server.address().port);
 });
+
+/*var server = app.listen(6001, '0.0.0.0', function() {
+  console.log('Listening on port %d', server.address().port);
+});*/
